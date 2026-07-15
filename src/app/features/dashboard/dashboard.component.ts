@@ -3,7 +3,6 @@ import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { MatListModule } from '@angular/material/list';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
@@ -11,24 +10,15 @@ import { MatChipsModule } from '@angular/material/chips';
 import { DatePipe } from '@angular/common';
 
 import {
-  PageHeaderComponent,
-  StatCardComponent,
-  EmptyStateComponent,
-  LineChartComponent,
-  DoughnutChartComponent,
-  BarChartComponent,
+  PageHeaderComponent, StatCardComponent, EmptyStateComponent,
+  LineChartComponent, DoughnutChartComponent, BarChartComponent,
 } from '@shared/components';
 import { AuthService } from '@core/services/auth.service';
 import { DashboardService } from '@core/services/dashboard.service';
 import {
-  DashboardStats,
-  DeclarationChartData,
-  StatusDistributionData,
-  MonthlyTrendData,
-  RecentDeclaration,
-  RecentConsultation,
-  DashboardActivity,
-  DashboardNotification,
+  DashboardStats, DeclarationChartData, StatusDistributionData,
+  MonthlyTrendData, RecentDeclaration, RecentConsultation,
+  DashboardActivity, DashboardNotification,
 } from '@core/models';
 
 interface QuickAction {
@@ -43,8 +33,8 @@ interface QuickAction {
   standalone: true,
   imports: [
     RouterLink, DatePipe,
-    MatCardModule, MatIconModule, MatButtonModule, MatListModule,
-    MatTooltipModule, MatProgressBarModule, MatTableModule, MatChipsModule,
+    MatCardModule, MatIconModule, MatButtonModule, MatTooltipModule,
+    MatProgressBarModule, MatTableModule, MatChipsModule,
     PageHeaderComponent, StatCardComponent, EmptyStateComponent,
     LineChartComponent, DoughnutChartComponent, BarChartComponent,
   ],
@@ -67,9 +57,7 @@ export class DashboardComponent implements OnInit {
   readonly activities = signal<DashboardActivity[]>([]);
   readonly notifications = signal<DashboardNotification[]>([]);
 
-  readonly unreadNotifications = computed(() =>
-    this.notifications().filter((n) => !n.isRead).length,
-  );
+  readonly unreadNotifications = computed(() => this.notifications().filter((n) => !n.isRead).length);
 
   readonly quickActions: QuickAction[] = [
     { label: 'Déclaration', icon: 'assignment', path: '/declarations', color: 'primary' },
@@ -84,22 +72,14 @@ export class DashboardComponent implements OnInit {
   readonly consultationColumns = ['patientName', 'doctorName', 'type', 'date', 'status'];
 
   readonly statusLabels: Record<string, string> = {
-    DRAFT: 'Brouillon',
-    SUBMITTED: 'Soumise',
-    IN_REVIEW: 'En revue',
-    APPROVED: 'Approuvée',
-    REJECTED: 'Rejetée',
+    DRAFT: 'Brouillon', SUBMITTED: 'Soumise', IN_REVIEW: 'En revue',
+    APPROVED: 'Approuvée', REJECTED: 'Rejetée',
   };
 
   readonly statusColors: Record<string, string> = {
-    DRAFT: '#b0bec5',
-    SUBMITTED: '#00897b',
-    IN_REVIEW: '#1e88e5',
-    APPROVED: '#4caf50',
-    REJECTED: '#f44336',
+    DRAFT: '#b0bec5', SUBMITTED: '#00897b', IN_REVIEW: '#1e88e5',
+    APPROVED: '#4caf50', REJECTED: '#f44336',
   };
-
-  readonly lineChartColors = ['#00897b', '#1e88e5', '#f44336'];
 
   ngOnInit(): void {
     this.loadDashboardData();
@@ -119,21 +99,12 @@ export class DashboardComponent implements OnInit {
         this.notifications.set(data.notifications);
         this.loading.set(false);
       },
-      error: () => {
-        this.loading.set(false);
-      },
+      error: () => { this.loading.set(false); },
     });
   }
 
-  getStatusLabel(status: string): string {
-    return this.statusLabels[status] ?? status;
-  }
+  getStatusLabel(status: string): string { return this.statusLabels[status] ?? status; }
+  getStatusColor(status: string): string { return this.statusColors[status] ?? '#b0bec5'; }
 
-  getStatusColor(status: string): string {
-    return this.statusColors[status] ?? '#b0bec5';
-  }
-
-  refresh(): void {
-    this.loadDashboardData();
-  }
+  refresh(): void { this.loadDashboardData(); }
 }

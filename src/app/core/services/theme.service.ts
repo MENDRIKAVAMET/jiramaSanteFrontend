@@ -1,30 +1,29 @@
-import { Injectable, effect, signal } from '@angular/core';
-import { APP_CONSTANTS } from '../constants';
-
-export type AppTheme = 'light' | 'dark';
+import { Injectable, inject, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
-  private readonly _theme = signal<AppTheme>('light');
-  readonly theme = this._theme.asReadonly();
+  private readonly document = inject(DOCUMENT);
+  readonly theme = signal<'light' | 'dark'>('light');
 
   constructor() {
-    const stored = localStorage.getItem(APP_CONSTANTS.themeStorageKey) as AppTheme | null;
-    if (stored) {
-      this._theme.set(stored);
-    }
-    effect(() => {
-      const current = this._theme();
-      localStorage.setItem(APP_CONSTANTS.themeStorageKey, current);
-      document.body.classList.toggle('dark-theme', current === 'dark');
-    });
+    const saved = localStorage.getItem('jirama_theme');
+    if (saved === 'dark') this.setDark();
   }
 
   toggle(): void {
-    this._theme.update((t) => (t === 'light' ? 'dark' : 'light'));
+    this.theme() === 'light' ? this.setDark() : this.setLight();
   }
 
-  set(theme: AppTheme): void {
-    this._theme.set(theme);
+  private setDark(): void {
+    this.theme.set('dark');
+    this.document.body.classList.add('dark-theme');
+    localStorage.setItem('jirama_theme', 'dark');
+  }
+
+  private setLight(): void {
+    this.theme.set('light');
+    this.document.body.classList.remove('dark-theme');
+    localStorage.setItem('jirama_theme', 'light');
   }
 }

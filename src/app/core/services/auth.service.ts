@@ -65,15 +65,11 @@ export class AuthService {
   }
 
   getAccessToken(): string | null {
-    const fromSignal = this._tokens()?.accessToken;
-    if (fromSignal) return fromSignal;
-    return localStorage.getItem(APP_CONSTANTS.tokenStorageKey);
+    return this._tokens()?.accessToken ?? localStorage.getItem(APP_CONSTANTS.tokenStorageKey);
   }
 
   getRefreshToken(): string | null {
-    const fromSignal = this._tokens()?.refreshToken;
-    if (fromSignal) return fromSignal;
-    return localStorage.getItem(APP_CONSTANTS.refreshTokenStorageKey);
+    return this._tokens()?.refreshToken ?? localStorage.getItem(APP_CONSTANTS.refreshTokenStorageKey);
   }
 
   hasRole(...roles: UserRole[]): boolean {
@@ -110,7 +106,6 @@ export class AuthService {
         this.clearSession();
       }
     }
-
     this._initializing.set(false);
   }
 
@@ -151,18 +146,9 @@ export class AuthService {
   private buildUserFromJwt(payload: JwtPayload): User | null {
     if (!payload.sub || !payload.role) return null;
     return {
-      id: payload.sub,
-      email: '',
-      firstName: '',
-      lastName: '',
-      matricule: '',
-      phone: null,
-      role: payload.role,
-      avatarUrl: null,
-      isActive: true,
-      lastLoginAt: null,
-      createdAt: '',
-      updatedAt: '',
+      id: payload.sub, email: '', firstName: '', lastName: '', matricule: '',
+      phone: null, role: payload.role, avatarUrl: null, isActive: true,
+      lastLoginAt: null, createdAt: '', updatedAt: '',
     };
   }
 }

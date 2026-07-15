@@ -17,39 +17,11 @@ import { MatIconModule } from '@angular/material/icon';
     </footer>
   `,
   styles: [`
-    .app-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 24px;
-      border-top: 1px solid rgba(0, 0, 0, 0.06);
-      background: #fff;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .footer-left {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 12px;
-      color: #78909c;
-    }
-    .footer-icon {
-      font-size: 18px;
-      width: 18px;
-      height: 18px;
-      color: #00897b;
-    }
-    .footer-right {
-      font-size: 12px;
-      color: #b0bec5;
-    }
-    @media (max-width: 599px) {
-      .app-footer {
-        justify-content: center;
-        text-align: center;
-      }
-    }
+    .app-footer { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-top: 1px solid rgba(0,0,0,0.06); background: #fff; flex-wrap: wrap; gap: 8px; }
+    .footer-left { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #78909c; }
+    .footer-icon { font-size: 18px; width: 18px; height: 18px; color: #00897b; }
+    .footer-right { font-size: 12px; color: #b0bec5; }
+    @media (max-width: 599px) { .app-footer { justify-content: center; text-align: center; } }
   `],
 })
 export class FooterComponent {

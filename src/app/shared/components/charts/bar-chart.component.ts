@@ -6,9 +6,7 @@ import { BaseChartComponent } from './base-chart.component';
   selector: 'app-bar-chart',
   standalone: true,
   imports: [BaseChartComponent],
-  template: `
-    <app-base-chart [config]="chartConfig"></app-base-chart>
-  `,
+  template: `<app-base-chart [config]="chartConfig"></app-base-chart>`,
 })
 export class BarChartComponent implements OnChanges {
   @Input() labels: string[] = [];
@@ -28,33 +26,14 @@ export class BarChartComponent implements OnChanges {
       type: 'bar',
       data: {
         labels: this.labels,
-        datasets: [
-          {
-            label: this.label,
-            data: this.data,
-            backgroundColor: bgColors,
-            borderRadius: 6,
-            borderSkipped: false,
-            maxBarThickness: 40,
-          },
-        ],
+        datasets: [{ label: this.label, data: this.data, backgroundColor: bgColors, borderRadius: 6, borderSkipped: false, maxBarThickness: 40 }],
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-        },
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
         scales: {
-          x: {
-            grid: { display: false },
-            ticks: { font: { size: 11 }, color: '#90a4ae' },
-          },
-          y: {
-            beginAtZero: true,
-            grid: { color: 'rgba(0,0,0,0.05)' },
-            ticks: { font: { size: 11 }, color: '#90a4ae' },
-          },
+          x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#90a4ae' } },
+          y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { font: { size: 11 }, color: '#90a4ae' } },
         },
       },
     };

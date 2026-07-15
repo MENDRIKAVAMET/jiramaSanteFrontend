@@ -9,21 +9,11 @@ export interface DashboardStats {
   emittedCertificates: number;
 }
 
-export interface ChartSeriesPoint {
-  label: string;
-  value: number;
-}
-
 export interface DeclarationChartData {
   labels: string[];
   submitted: number[];
   approved: number[];
   rejected: number[];
-}
-
-export interface ConsultationChartData {
-  labels: string[];
-  data: number[];
 }
 
 export interface StatusDistributionData {
@@ -77,7 +67,6 @@ export interface DashboardNotification {
 export interface DashboardData {
   stats: DashboardStats;
   declarationChart: DeclarationChartData;
-  consultationChart: ConsultationChartData;
   statusDistribution: StatusDistributionData;
   monthlyTrend: MonthlyTrendData;
   recentDeclarations: RecentDeclaration[];

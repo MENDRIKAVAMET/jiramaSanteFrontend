@@ -6,9 +6,7 @@ import { BaseChartComponent } from './base-chart.component';
   selector: 'app-doughnut-chart',
   standalone: true,
   imports: [BaseChartComponent],
-  template: `
-    <app-base-chart [config]="chartConfig"></app-base-chart>
-  `,
+  template: `<app-base-chart [config]="chartConfig"></app-base-chart>`,
 })
 export class DoughnutChartComponent implements OnChanges {
   @Input() labels: string[] = [];
@@ -26,27 +24,11 @@ export class DoughnutChartComponent implements OnChanges {
       type: 'doughnut',
       data: {
         labels: this.labels,
-        datasets: [
-          {
-            data: this.data,
-            backgroundColor: this.colors,
-            borderColor: '#fff',
-            borderWidth: 2,
-            hoverOffset: 8,
-          },
-        ],
+        datasets: [{ data: this.data, backgroundColor: this.colors, borderColor: '#fff', borderWidth: 2, hoverOffset: 8 }],
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '65%',
-        plugins: {
-          legend: {
-            display: true,
-            position: 'bottom',
-            labels: { usePointStyle: true, padding: 12, font: { size: 12 } },
-          },
-        },
+        responsive: true, maintainAspectRatio: false, cutout: '65%',
+        plugins: { legend: { display: true, position: 'bottom', labels: { usePointStyle: true, padding: 12, font: { size: 12 } } } },
       },
     };
   }

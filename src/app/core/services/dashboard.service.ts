@@ -3,16 +3,10 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
 import {
-  DashboardData,
-  DashboardStats,
-  DeclarationChartData,
-  ConsultationChartData,
-  StatusDistributionData,
-  MonthlyTrendData,
-  RecentDeclaration,
-  RecentConsultation,
-  DashboardActivity,
-  DashboardNotification,
+  DashboardData, DashboardStats, DeclarationChartData,
+  StatusDistributionData, MonthlyTrendData,
+  RecentDeclaration, RecentConsultation,
+  DashboardActivity, DashboardNotification,
 } from '../models';
 
 @Injectable({ providedIn: 'root' })
@@ -30,10 +24,6 @@ export class DashboardService {
 
   getDeclarationChart(): Observable<DeclarationChartData> {
     return this.http.get<DeclarationChartData>(`${this.baseUrl}/charts/declarations`);
-  }
-
-  getConsultationChart(): Observable<ConsultationChartData> {
-    return this.http.get<ConsultationChartData>(`${this.baseUrl}/charts/consultations`);
   }
 
   getStatusDistribution(): Observable<StatusDistributionData> {

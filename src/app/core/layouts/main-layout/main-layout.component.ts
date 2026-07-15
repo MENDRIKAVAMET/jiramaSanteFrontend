@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, effect } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive, NavigationEnd } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -56,20 +56,19 @@ export class MainLayoutComponent {
   private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly router = inject(Router);
 
-  readonly sidebarCollapsed = this.session.sidebarCollapsed;
   readonly currentUser = this.auth.currentUser;
   readonly after: TooltipPosition = 'after';
 
   readonly isHandset = signal(false);
-  readonly isTablet = signal(false);
   readonly sidenavOpened = signal(true);
+  readonly sidebarCollapsed = signal(false);
   readonly breadcrumbItems = signal<BreadcrumbItem[]>([]);
   readonly unreadNotifications = signal(3);
 
   readonly notifications = signal<NotificationItem[]>([
     { id: '1', icon: 'assignment', title: 'Nouvelle déclaration', message: 'Une déclaration a été soumise', time: 'il y a 5 min', unread: true },
     { id: '2', icon: 'medical_services', title: 'Consultation programmée', message: 'Consultation le 16/07 à 10h', time: 'il y a 1 h', unread: true },
-    { id: '3', icon: 'verified', title: 'Certificat émis', message: 'Certificat d\'aptitude disponible', time: 'il y a 3 h', unread: true },
+    { id: '3', icon: 'verified', title: 'Certificat émis', message: "Certificat d'aptitude disponible", time: 'il y a 3 h', unread: true },
   ]);
 
   readonly visibleNavItems = computed<NavItem[]>(() => {
@@ -86,29 +85,14 @@ export class MainLayoutComponent {
   readonly initials = computed<string>(() => {
     const user = this.auth.currentUser();
     if (!user) return '?';
-    const first = user.firstName?.charAt(0) ?? '';
-    const last = user.lastName?.charAt(0) ?? '';
-    return (first + last).toUpperCase() || '?';
-  });
-
-  readonly sidenavWidth = computed(() => {
-    if (this.isHandset() || this.isTablet()) return 'var(--jirama-sidenav-width)';
-    return this.sidebarCollapsed() ? 'var(--jirama-sidenav-collapsed)' : 'var(--jirama-sidenav-width)';
+    return ((user.firstName?.charAt(0) ?? '') + (user.lastName?.charAt(0) ?? '')).toUpperCase() || '?';
   });
 
   constructor() {
-    this.breakpointObserver
-      .observe([Breakpoints.Handset])
-      .subscribe((result) => {
-        this.isHandset.set(result.matches);
-        if (result.matches) this.sidenavOpened.set(false);
-      });
-
-    this.breakpointObserver
-      .observe([Breakpoints.TabletPortrait])
-      .subscribe((result) => {
-        this.isTablet.set(result.matches);
-      });
+    this.breakpointObserver.observe([Breakpoints.Handset]).subscribe((result) => {
+      this.isHandset.set(result.matches);
+      if (result.matches) this.sidenavOpened.set(false);
+    });
 
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
@@ -122,7 +106,7 @@ export class MainLayoutComponent {
     if (this.isHandset()) {
       this.sidenavOpened.update((v) => !v);
     } else {
-      this.session.toggleSidebar();
+      this.sidebarCollapsed.update((v) => !v);
     }
   }
 
@@ -135,9 +119,7 @@ export class MainLayoutComponent {
   }
 
   markNotificationRead(id: string): void {
-    this.notifications.update((items) =>
-      items.map((n) => (n.id === id ? { ...n, unread: false } : n)),
-    );
+    this.notifications.update((items) => items.map((n) => (n.id === id ? { ...n, unread: false } : n)));
     this.updateUnreadCount();
   }
 
@@ -146,13 +128,8 @@ export class MainLayoutComponent {
     this.updateUnreadCount();
   }
 
-  trackByNav(_index: number, item: NavItem): string {
-    return item.path;
-  }
-
-  trackByNotification(_index: number, item: NotificationItem): string {
-    return item.id;
-  }
+  trackByNav(_index: number, item: NavItem): string { return item.path; }
+  trackByNotification(_index: number, item: NotificationItem): string { return item.id; }
 
   private updateUnreadCount(): void {
     this.unreadNotifications.set(this.notifications().filter((n) => n.unread).length);
@@ -160,24 +137,14 @@ export class MainLayoutComponent {
 
   private buildBreadcrumb(url: string): void {
     const segments = url.split('/').filter(Boolean);
-    const items: BreadcrumbItem[] = [{ label: 'Accueil', path: '/dashboard' }];
     const labelMap: Record<string, string> = {
-      dashboard: 'Tableau de bord',
-      agents: 'Agents',
-      doctors: 'Médecins',
-      declarations: 'Déclarations',
-      consultations: 'Consultations',
-      diagnostics: 'Diagnostics',
-      prescriptions: 'Prescriptions',
-      certificates: 'Certificats',
-      directions: 'Directions',
-      services: 'Services',
-      positions: 'Postes',
-      symptoms: 'Symptômes',
-      notifications: 'Notifications',
-      profile: 'Profil',
-      settings: 'Paramètres',
+      dashboard: 'Tableau de bord', agents: 'Agents', doctors: 'Médecins',
+      declarations: 'Déclarations', consultations: 'Consultations', diagnostics: 'Diagnostics',
+      prescriptions: 'Prescriptions', certificates: 'Certificats', directions: 'Directions',
+      services: 'Services', positions: 'Postes', symptoms: 'Symptômes',
+      notifications: 'Notifications', profile: 'Profil', settings: 'Paramètres',
     };
+    const items: BreadcrumbItem[] = [{ label: 'Accueil', path: '/dashboard' }];
     let path = '';
     for (const segment of segments) {
       path += '/' + segment;
