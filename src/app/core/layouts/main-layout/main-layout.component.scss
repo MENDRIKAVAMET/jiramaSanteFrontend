@@ -1,0 +1,467 @@
+:host {
+  display: block;
+  height: 100vh;
+}
+
+.app-sidenav-container {
+  height: 100%;
+}
+
+// =============================================================
+//  SIDEBAR
+// =============================================================
+
+.app-sidenav {
+  background: #fff;
+  border-right: 1px solid rgba(0, 0, 0, 0.06);
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.sidenav-header {
+  padding: 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 40px;
+  }
+
+  .brand-icon {
+    font-size: 36px;
+    width: 36px;
+    height: 36px;
+    color: #00897b;
+    flex-shrink: 0;
+  }
+
+  .brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+  }
+
+  .brand-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #00695c;
+    letter-spacing: 0.5px;
+  }
+
+  .brand-sub {
+    font-size: 12px;
+    color: #4db6ac;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+}
+
+.nav-list {
+  flex: 1;
+  overflow-y: auto;
+  padding-top: 8px;
+
+  a.nav-item {
+    margin: 2px 8px;
+    border-radius: 8px;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    min-height: 44px;
+
+    &:hover {
+      background-color: rgba(0, 137, 123, 0.06);
+    }
+
+    &.active-nav-item {
+      background: linear-gradient(135deg, rgba(0, 137, 123, 0.12), rgba(0, 105, 92, 0.08));
+      color: #00695c;
+      font-weight: 500;
+
+      .mat-icon {
+        color: #00897b;
+      }
+    }
+
+    .mat-icon {
+      color: #78909c;
+      transition: color 0.15s ease;
+    }
+  }
+}
+
+.nav-badge-dot {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #f44336;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+}
+
+.sidenav-footer {
+  padding: 12px 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.sidenav-footer-text {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #b0bec5;
+}
+
+.footer-lock {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  color: #4caf50;
+}
+
+// =============================================================
+//  MAIN CONTENT
+// =============================================================
+
+.app-sidenav-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #f5f7fa;
+}
+
+// =============================================================
+//  TOPBAR
+// =============================================================
+
+.app-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #fff;
+  box-shadow: var(--jirama-toolbar-shadow);
+  height: var(--jirama-header-height);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 16px;
+}
+
+.menu-toggle {
+  flex-shrink: 0;
+}
+
+.toolbar-breadcrumb {
+  margin-left: 8px;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.search-wrapper {
+  margin-right: 8px;
+}
+
+.search-field {
+  font-size: 13px;
+
+  ::ng-deep {
+    .mat-mdc-form-field-infix {
+      min-height: 40px;
+      padding: 8px 0;
+    }
+    .mat-mdc-form-field-subscript-wrapper {
+      display: none;
+    }
+    .mat-mdc-text-field-wrapper {
+      background: #f5f7fa;
+      border-radius: 20px;
+      box-shadow: none;
+      .mdc-notched-outline__leading,
+      .mdc-notched-outline__notch,
+      .mdc-notched-outline__trailing {
+        border: none;
+      }
+    }
+  }
+
+  .search-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: #b0bec5;
+    margin-right: 4px;
+  }
+}
+
+.toolbar-btn {
+  flex-shrink: 0;
+}
+
+// =============================================================
+//  AVATAR
+// =============================================================
+
+.avatar-btn {
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00897b, #004d40);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.avatar-btn:hover .avatar {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 137, 123, 0.3);
+}
+
+// =============================================================
+//  USER MENU
+// =============================================================
+
+.user-menu-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  cursor: default;
+
+  .user-avatar-lg {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00897b, #004d40);
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .user-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .user-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .user-email {
+    font-size: 12px;
+    color: #888;
+    margin-top: 2px;
+  }
+
+  .user-role {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #00695c;
+    background: rgba(0, 137, 123, 0.1);
+    border-radius: 4px;
+    width: fit-content;
+  }
+}
+
+.logout-item {
+  color: #f44336;
+  .mat-icon {
+    color: #f44336;
+  }
+}
+
+// =============================================================
+//  NOTIFICATIONS MENU
+// =============================================================
+
+::ng-deep .notif-menu {
+  min-width: 360px;
+  max-width: 400px;
+}
+
+.notif-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+
+  .notif-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .notif-mark-all {
+    font-size: 12px;
+    color: #00897b;
+  }
+}
+
+.notif-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 16px;
+  color: #b0bec5;
+
+  mat-icon {
+    font-size: 36px;
+    width: 36px;
+    height: 36px;
+  }
+
+  span {
+    font-size: 13px;
+  }
+}
+
+.notif-item {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 12px;
+  padding: 12px 16px !important;
+  min-height: auto !important;
+  line-height: 1.4;
+
+  &.unread {
+    background: rgba(0, 137, 123, 0.04);
+  }
+
+  .mat-icon {
+    flex-shrink: 0;
+    color: #90a4ae;
+    margin-top: 2px;
+  }
+
+  .unread-icon {
+    color: #00897b;
+  }
+}
+
+.notif-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.notif-item-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+}
+
+.notif-item-msg {
+  font-size: 12px;
+  color: #78909c;
+  margin-top: 2px;
+}
+
+.notif-item-time {
+  font-size: 11px;
+  color: #b0bec5;
+  margin-top: 4px;
+}
+
+.notif-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00897b;
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+.notif-view-all {
+  display: flex;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: #00897b;
+}
+
+// =============================================================
+//  PAGE CONTENT & FOOTER
+// =============================================================
+
+.page-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+// =============================================================
+//  RESPONSIVE
+// =============================================================
+
+@media (max-width: 1024px) {
+  .search-wrapper {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-toolbar {
+    padding: 0 8px;
+  }
+
+  .toolbar-breadcrumb {
+    display: none;
+  }
+}
+
+@media (max-width: 599px) {
+  .app-toolbar {
+    height: 56px;
+  }
+
+  .toolbar-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+
+  ::ng-deep .notif-menu {
+    min-width: 300px;
+    max-width: calc(100vw - 32px);
+  }
+
+  .user-menu-header {
+    padding: 12px;
+  }
+}

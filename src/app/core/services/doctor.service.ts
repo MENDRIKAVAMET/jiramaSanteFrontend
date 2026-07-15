@@ -1,0 +1,32 @@
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '@env/environment';
+import { Doctor, PaginatedResponse, PaginationParams } from '../models';
+import { toHttpParams } from './http-utils';
+
+@Injectable({ providedIn: 'root' })
+export class DoctorService {
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = `${environment.apiUrl}/doctors`;
+
+  getAll(params: PaginationParams): Observable<PaginatedResponse<Doctor>> {
+    return this.http.get<PaginatedResponse<Doctor>>(this.baseUrl, { params: toHttpParams(params) });
+  }
+
+  getById(id: string): Observable<Doctor> {
+    return this.http.get<Doctor>(`${this.baseUrl}/${id}`);
+  }
+
+  create(data: Omit<Doctor, 'id' | 'createdAt' | 'updatedAt'>): Observable<Doctor> {
+    return this.http.post<Doctor>(this.baseUrl, data);
+  }
+
+  update(id: string, data: Partial<Doctor>): Observable<Doctor> {
+    return this.http.put<Doctor>(`${this.baseUrl}/${id}`, data);
+  }
+
+  delete(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
+}
