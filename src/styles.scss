@@ -1,0 +1,60 @@
+@use '@angular/material' as mat;
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:root {
+  --jirama-header-height: 64px;
+  --jirama-sidenav-width: 260px;
+  --jirama-sidenav-collapsed: 72px;
+  --jirama-toolbar-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --jirama-card-radius: 12px;
+  --jirama-card-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  --jirama-card-shadow-hover: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+$theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: mat.$azure-palette,
+    tertiary: mat.$green-palette,
+  ),
+  typography: (
+    brand-family: 'Inter, sans-serif',
+    plain-family: 'Inter, sans-serif',
+  ),
+  density: (scale: 0),
+));
+
+@include mat.all-component-themes($theme);
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hide-mobile { @media (max-width: 599px) { display: none !important; } }
+.hide-tablet { @media (max-width: 1024px) { display: none !important; } }
+.hide-desktop { @media (min-width: 1025px) { display: none !important; } }
+
+.mat-mdc-card { border-radius: var(--jirama-card-radius) !important; }
+
+.mat-mdc-menu-panel {
+  border-radius: 10px !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12) !important;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #b2dfdb; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #80cbc4; }
