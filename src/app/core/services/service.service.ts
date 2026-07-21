@@ -23,7 +23,7 @@ export class ServiceService {
   }
 
   update(id: string, data: Partial<Service>): Observable<Service> {
-    return this.http.put<Service>(`${this.baseUrl}/${id}`, data);
+    return this.http.patch<Service>(`${this.baseUrl}/${id}`, data);
   }
 
   delete(id: string): Observable<void> {

@@ -23,7 +23,7 @@ export class DiagnosticService {
   }
 
   update(id: string, data: Partial<Diagnostic>): Observable<Diagnostic> {
-    return this.http.put<Diagnostic>(`${this.baseUrl}/${id}`, data);
+    return this.http.patch<Diagnostic>(`${this.baseUrl}/${id}`, data);
   }
 
   search(query: string, params?: Omit<PaginationParams, 'search'>): Observable<PaginatedResponse<Diagnostic>> {

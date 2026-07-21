@@ -23,7 +23,7 @@ export class PositionService {
   }
 
   update(id: string, data: Partial<Position>): Observable<Position> {
-    return this.http.put<Position>(`${this.baseUrl}/${id}`, data);
+    return this.http.patch<Position>(`${this.baseUrl}/${id}`, data);
   }
 
   delete(id: string): Observable<void> {

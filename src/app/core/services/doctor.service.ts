@@ -23,7 +23,7 @@ export class DoctorService {
   }
 
   update(id: string, data: Partial<Doctor>): Observable<Doctor> {
-    return this.http.put<Doctor>(`${this.baseUrl}/${id}`, data);
+    return this.http.patch<Doctor>(`${this.baseUrl}/${id}`, data);
   }
 
   search(query: string, params?: Omit<PaginationParams, 'search'>): Observable<PaginatedResponse<Doctor>> {

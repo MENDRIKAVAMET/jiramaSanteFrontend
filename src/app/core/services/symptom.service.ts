@@ -23,7 +23,7 @@ export class SymptomService {
   }
 
   update(id: string, data: Partial<Symptom>): Observable<Symptom> {
-    return this.http.put<Symptom>(`${this.baseUrl}/${id}`, data);
+    return this.http.patch<Symptom>(`${this.baseUrl}/${id}`, data);
   }
 
   search(query: string, params?: Omit<PaginationParams, 'search'>): Observable<PaginatedResponse<Symptom>> {

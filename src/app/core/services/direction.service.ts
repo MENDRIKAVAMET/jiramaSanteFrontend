@@ -23,7 +23,7 @@ export class DirectionService {
   }
 
   update(id: string, data: Partial<Direction>): Observable<Direction> {
-    return this.http.put<Direction>(`${this.baseUrl}/${id}`, data);
+    return this.http.patch<Direction>(`${this.baseUrl}/${id}`, data);
   }
 
   delete(id: string): Observable<void> {

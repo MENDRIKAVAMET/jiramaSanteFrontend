@@ -23,7 +23,7 @@ export class CertificateService {
   }
 
   update(id: string, data: Partial<Certificate>): Observable<Certificate> {
-    return this.http.put<Certificate>(`${this.baseUrl}/${id}`, data);
+    return this.http.patch<Certificate>(`${this.baseUrl}/${id}`, data);
   }
 
   search(query: string, params?: Omit<PaginationParams, 'search'>): Observable<PaginatedResponse<Certificate>> {

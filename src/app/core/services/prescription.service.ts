@@ -27,7 +27,7 @@ export class PrescriptionService {
   }
 
   update(id: string, data: Partial<Prescription>): Observable<Prescription> {
-    return this.http.put<Prescription>(`${this.baseUrl}/${id}`, data);
+    return this.http.patch<Prescription>(`${this.baseUrl}/${id}`, data);
   }
 
   search(query: string, params?: Omit<PaginationParams, 'search'>): Observable<PaginatedResponse<Prescription>> {

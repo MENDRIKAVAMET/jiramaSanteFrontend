@@ -23,7 +23,7 @@ export class AgentService {
   }
 
   update(id: string, data: Partial<Agent>): Observable<Agent> {
-    return this.http.put<Agent>(`${this.baseUrl}/${id}`, data);
+    return this.http.patch<Agent>(`${this.baseUrl}/${id}`, data);
   }
 
   search(query: string, params?: Omit<PaginationParams, 'search'>): Observable<PaginatedResponse<Agent>> {

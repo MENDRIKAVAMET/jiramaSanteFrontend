@@ -14,7 +14,7 @@ export class ProfileService {
   }
 
   updateProfile(data: Partial<User>): Observable<User> {
-    return this.http.put<User>(`${this.baseUrl}`, data);
+    return this.http.patch<User>(`${this.baseUrl}`, data);
   }
 
   changePassword(data: { currentPassword: string; newPassword: string }): Observable<void> {
