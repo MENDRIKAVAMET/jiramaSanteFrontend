@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
 import {
@@ -19,7 +19,7 @@ export class DashboardService {
   }
 
   getStats(): Observable<DashboardStats> {
-    return this.http.get<DashboardStats>(`${this.baseUrl}/stats`);
+    return this.http.get<DashboardStats>(`${this.baseUrl}/statistics`);
   }
 
   getDeclarationChart(): Observable<DeclarationChartData> {
@@ -48,5 +48,34 @@ export class DashboardService {
 
   getNotifications(): Observable<DashboardNotification[]> {
     return this.http.get<DashboardNotification[]>(`${this.baseUrl}/notifications`);
+  }
+
+  getAll(): Observable<DashboardData> {
+    return this.http.get<DashboardData>(this.baseUrl);
+  }
+
+  getById(id: string): Observable<DashboardData> {
+    return this.http.get<DashboardData>(`${this.baseUrl}/${id}`);
+  }
+
+  create(data: Partial<DashboardData>): Observable<DashboardData> {
+    return this.http.post<DashboardData>(this.baseUrl, data);
+  }
+
+  update(id: string, data: Partial<DashboardData>): Observable<DashboardData> {
+    return this.http.put<DashboardData>(`${this.baseUrl}/${id}`, data);
+  }
+
+  delete(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
+
+  search(query: string, params?: { page: number; pageSize: number }): Observable<DashboardData> {
+    const httpParams = new HttpParams()
+      .set('query', query)
+      .set('page', (params?.page ?? 1).toString())
+      .set('pageSize', (params?.pageSize ?? 20).toString());
+
+    return this.http.get<DashboardData>(`${this.baseUrl}/search`, { params: httpParams });
   }
 }

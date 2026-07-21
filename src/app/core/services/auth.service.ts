@@ -1,6 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, tap } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { environment } from '@env/environment';
 import { AuthCredentials, AuthSession, AuthTokens, User, UserRole } from '../models';
 import { APP_CONSTANTS } from '../constants';
@@ -35,33 +35,22 @@ export class AuthService {
     this.restoreSession();
   }
 
-  login(credentials: AuthCredentials): Observable<AuthSession> {
-    return this.http
-      .post<AuthSession>(`${this.baseUrl}/login`, credentials)
-      .pipe(tap((session) => this.setSession(session)));
-  }
-
-  logout(): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/logout`, {}).pipe(
-      tap(() => this.clearSession()),
+  login(credentials: AuthCredentials): Observable<{ access_token: string }> {
+    return this.http.post<{ access_token: string }>(`${this.baseUrl}/login`, credentials).pipe(
+      tap((res) => {
+        const token = res.access_token;
+        this.persistTokens({ accessToken: token });
+        const payload = this.decodeJwt(token);
+        if (payload) {
+          const user = this.buildUserFromJwt(payload);
+          if (user) this._currentUser.set(user);
+        }
+      }),
     );
   }
 
-  refreshToken(): Observable<AuthTokens> {
-    const refreshToken = this.getRefreshToken();
-    if (!refreshToken) {
-      this.clearSession();
-      return of();
-    }
-    return this.http
-      .post<AuthTokens>(`${this.baseUrl}/refresh`, { refreshToken })
-      .pipe(tap((tokens) => this.persistTokens(tokens)));
-  }
-
-  loadProfile(): Observable<User> {
-    return this.http.get<User>(`${this.baseUrl}/me`).pipe(
-      tap((user) => this._currentUser.set(user)),
-    );
+  logout(): void {
+    this.clearSession();
   }
 
   getAccessToken(): string | null {
@@ -69,7 +58,7 @@ export class AuthService {
   }
 
   getRefreshToken(): string | null {
-    return this._tokens()?.refreshToken ?? localStorage.getItem(APP_CONSTANTS.refreshTokenStorageKey);
+    return null;
   }
 
   hasRole(...roles: UserRole[]): boolean {
@@ -87,21 +76,13 @@ export class AuthService {
 
   private restoreSession(): void {
     const accessToken = localStorage.getItem(APP_CONSTANTS.tokenStorageKey);
-    const refreshToken = localStorage.getItem(APP_CONSTANTS.refreshTokenStorageKey);
 
-    if (accessToken && refreshToken) {
+    if (accessToken) {
       const payload = this.decodeJwt(accessToken);
       if (payload && !this.isJwtExpired(payload)) {
-        this._tokens.set({ accessToken, refreshToken, expiresIn: payload.exp - payload.iat });
+        this._tokens.set({ accessToken, expiresIn: payload.exp - payload.iat });
         const user = this.buildUserFromJwt(payload);
-        if (user) {
-          this._currentUser.set(user);
-        } else {
-          this.loadProfile().subscribe({
-            next: (profile) => this._currentUser.set(profile),
-            error: () => this.clearSession(),
-          });
-        }
+        if (user) this._currentUser.set(user);
       } else {
         this.clearSession();
       }
@@ -110,28 +91,26 @@ export class AuthService {
   }
 
   private setSession(session: AuthSession): void {
-    this._currentUser.set(session.user);
+    if (session.user) this._currentUser.set(session.user);
     this.persistTokens(session.tokens);
   }
 
   private persistTokens(tokens: AuthTokens): void {
     this._tokens.set(tokens);
     localStorage.setItem(APP_CONSTANTS.tokenStorageKey, tokens.accessToken);
-    localStorage.setItem(APP_CONSTANTS.refreshTokenStorageKey, tokens.refreshToken);
   }
 
-  private clearSession(): void {
+  public clearSession(): void {
     this._currentUser.set(null);
     this._tokens.set(null);
     localStorage.removeItem(APP_CONSTANTS.tokenStorageKey);
-    localStorage.removeItem(APP_CONSTANTS.refreshTokenStorageKey);
   }
 
   private decodeJwt(token: string): JwtPayload | null {
     try {
       const parts = token.split('.');
       if (parts.length !== 3) return null;
-      const payload = atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'));
+      const payload = atob(parts[1].replaceAll('-', '+').replaceAll('_', '/'));
       return JSON.parse(payload) as JwtPayload;
     } catch {
       return null;

@@ -1,28 +1,123 @@
-import { Component } from '@angular/core';
-import { PageHeaderComponent } from '@shared/components';
+import { Component, inject, signal, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatInputModule } from '@angular/material/input';
+import { MatTableModule } from '@angular/material/table';
+import { MatToolbarModule } from '@angular/material/toolbar';
+
+import { PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent } from '@shared/components';
+import { DeclarationService } from '@core/services';
+import { DeclarationListItem } from '@core/models';
 
 @Component({
   selector: 'app-declarations',
   standalone: true,
-  imports: [PageHeaderComponent],
+  imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatIconModule, MatButtonModule, MatInputModule, MatTableModule, MatToolbarModule, PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent],
   template: `
     <div class="page-container">
-      <app-page-header
-        icon="assignment"
-        title="Déclarations sanitaires"
-        subtitle="Déclaration et suivi des cas sanitaires"
-      ></app-page-header>
-      <p class="placeholder-text">
-        Les déclarations sanitaires et leur suivi seront disponibles ici une fois le backend connecté.
-      </p>
+      <app-page-header icon="assignment" title="Déclarations sanitaires" subtitle="Déclaration et suivi des cas sanitaires"></app-page-header>
+
+      <mat-card class="toolbar-card">
+        <mat-toolbar>
+          <div class="search">
+            <mat-form-field appearance="outline">
+              <input matInput placeholder="Rechercher" [formControl]="searchControl" (keyup.enter)="onSearch()" />
+            </mat-form-field>
+            <button mat-flat-button color="primary" (click)="onSearch()"><mat-icon>search</mat-icon> Rechercher</button>
+          </div>
+          <span class="spacer"></span>
+          <button mat-flat-button color="primary" (click)="onCreate()"><mat-icon>add</mat-icon> Nouvelle déclaration</button>
+        </mat-toolbar>
+      </mat-card>
+
+      <mat-card class="content-card">
+        <loading-spinner *ngIf="loading()"></loading-spinner>
+        <ng-container *ngIf="!loading()">
+          <empty-state *ngIf="data().length === 0" title="Aucune donnée" description="Aucune déclaration disponible pour le moment."></empty-state>
+          <div *ngIf="data().length > 0" class="table-wrapper">
+            <table mat-table [dataSource]="data()" class="mat-elevation-z2">
+              <ng-container matColumnDef="reference">
+                <th mat-header-cell *matHeaderCellDef>Référence</th>
+                <td mat-cell *matCellDef="let row">{{ row.reference }}</td>
+              </ng-container>
+              <ng-container matColumnDef="agentName">
+                <th mat-header-cell *matHeaderCellDef>Agent</th>
+                <td mat-cell *matCellDef="let row">{{ row.agentName }}</td>
+              </ng-container>
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Statut</th>
+                <td mat-cell *matCellDef="let row">{{ row.status }}</td>
+              </ng-container>
+              <ng-container matColumnDef="declarationDate">
+                <th mat-header-cell *matHeaderCellDef>Date</th>
+                <td mat-cell *matCellDef="let row">{{ row.declarationDate }}</td>
+              </ng-container>
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let row">
+                  <button mat-icon-button color="primary" (click)="onView(row.id)"><mat-icon>visibility</mat-icon></button>
+                  <button mat-icon-button color="primary" (click)="onEdit(row.id)"><mat-icon>edit</mat-icon></button>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+          </div>
+        </ng-container>
+      </mat-card>
     </div>
   `,
-  styles: [`
-    .placeholder-text {
-      color: #78909c;
-      font-size: 15px;
-      line-height: 1.6;
-    }
-  `],
+  styles: [`.toolbar-card { margin-bottom: 16px; } .search { display:flex; gap:8px; align-items:center; } .spacer { flex: 1 1 auto; } .content-card { padding: 16px; } .table-wrapper { overflow: auto; }`],
 })
-export class DeclarationsComponent {}
+export class DeclarationsComponent implements OnInit {
+  private readonly service = inject(DeclarationService);
+  readonly loading = signal(false);
+  readonly data = signal<DeclarationListItem[]>([]);
+  readonly displayedColumns = ['reference', 'agentName', 'status', 'declarationDate', 'actions'];
+  readonly searchControl = new FormControl('');
+
+  ngOnInit(): void {
+    this.loadDeclarations();
+  }
+
+  onSearch(): void {
+    this.loadDeclarations(this.searchControl.value?.trim() ?? '');
+  }
+
+  onCreate(): void {
+    console.warn('Create declaration workflow is not implemented yet.');
+  }
+
+  onView(id: string): void {
+    this.loading.set(true);
+    this.service.getById(id).subscribe({
+      next: () => this.loading.set(false),
+      error: () => this.loading.set(false),
+    });
+  }
+
+  onEdit(id: string): void {
+    this.onView(id);
+  }
+
+  private loadDeclarations(query = ''): void {
+    this.loading.set(true);
+    const request = query
+      ? this.service.search(query, { page: 1, pageSize: 20 })
+      : this.service.getAll({ page: 1, pageSize: 20 });
+
+    request.subscribe({
+      next: (response) => {
+        this.data.set(response.items);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+      },
+    });
+  }
+}

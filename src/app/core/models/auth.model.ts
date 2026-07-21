@@ -22,11 +22,10 @@ export interface AuthCredentials {
 
 export interface AuthTokens {
   accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
+  expiresIn?: number;
 }
 
 export interface AuthSession {
-  user: User;
+  user?: User;
   tokens: AuthTokens;
 }

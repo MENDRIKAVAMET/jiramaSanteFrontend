@@ -18,19 +18,41 @@ export class DeclarationService {
     return this.http.get<Declaration>(`${this.baseUrl}/${id}`);
   }
 
+  search(query: string, params?: Omit<PaginationParams, 'search'>): Observable<PaginatedResponse<DeclarationListItem>> {
+    const requestParams: PaginationParams = {
+      page: params?.page ?? 1,
+      pageSize: params?.pageSize ?? 20,
+      sortBy: params?.sortBy,
+      sortOrder: params?.sortOrder,
+      search: query,
+    };
+
+    return this.http.get<PaginatedResponse<DeclarationListItem>>(this.baseUrl, {
+      params: toHttpParams(requestParams),
+    });
+  }
+
   create(data: Omit<Declaration, 'id' | 'reference' | 'createdAt' | 'updatedAt'>): Observable<Declaration> {
     return this.http.post<Declaration>(this.baseUrl, data);
   }
 
   update(id: string, data: Partial<Declaration>): Observable<Declaration> {
-    return this.http.put<Declaration>(`${this.baseUrl}/${id}`, data);
+    return this.http.patch<Declaration>(`${this.baseUrl}/${id}`, data);
   }
 
-  submit(id: string): Observable<Declaration> {
-    return this.http.post<Declaration>(`${this.baseUrl}/${id}/submit`, {});
+  getPending(): Observable<DeclarationListItem[]> {
+    return this.http.get<DeclarationListItem[]>(`${this.baseUrl}/pending`);
   }
 
-  delete(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  getMyDeclarations(): Observable<DeclarationListItem[]> {
+    return this.http.get<DeclarationListItem[]>(`${this.baseUrl}/my-declarations`);
+  }
+
+  assignDoctor(id: string, doctorId: string): Observable<Declaration> {
+    return this.http.patch<Declaration>(`${this.baseUrl}/${id}/assign`, { doctorId });
+  }
+
+  updateStatus(id: string, status: string): Observable<Declaration> {
+    return this.http.patch<Declaration>(`${this.baseUrl}/${id}/status`, { status });
   }
 }

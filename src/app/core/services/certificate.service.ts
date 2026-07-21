@@ -26,6 +26,20 @@ export class CertificateService {
     return this.http.put<Certificate>(`${this.baseUrl}/${id}`, data);
   }
 
+  search(query: string, params?: Omit<PaginationParams, 'search'>): Observable<PaginatedResponse<Certificate>> {
+    const requestParams: PaginationParams = {
+      page: params?.page ?? 1,
+      pageSize: params?.pageSize ?? 20,
+      sortBy: params?.sortBy,
+      sortOrder: params?.sortOrder,
+      search: query,
+    };
+
+    return this.http.get<PaginatedResponse<Certificate>>(this.baseUrl, {
+      params: toHttpParams(requestParams),
+    });
+  }
+
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }

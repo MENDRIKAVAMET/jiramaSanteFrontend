@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
-  selector: 'app-loading-spinner',
+  selector: 'app-loading-spinner, loading-spinner',
   standalone: true,
   imports: [MatProgressSpinnerModule],
   template: `

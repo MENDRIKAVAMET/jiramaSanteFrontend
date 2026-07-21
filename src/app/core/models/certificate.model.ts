@@ -15,3 +15,11 @@ export interface Certificate {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface CertificateListItem {
+  id: string;
+  reference: string;
+  type: CertificateType;
+  issuedTo: string;
+  date: string;
+}

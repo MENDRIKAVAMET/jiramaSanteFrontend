@@ -9,3 +9,11 @@ export interface Diagnostic {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface DiagnosticListItem {
+  id: string;
+  reference: string;
+  description: string;
+  severity: string;
+  date: string;
+}

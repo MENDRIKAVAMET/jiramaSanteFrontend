@@ -24,3 +24,11 @@ export interface PrescriptionItem {
   duration: string;
   quantity: number;
 }
+
+export interface PrescriptionListItem {
+  id: string;
+  reference: string;
+  doctor: string;
+  date: string;
+  status: PrescriptionStatus;
+}

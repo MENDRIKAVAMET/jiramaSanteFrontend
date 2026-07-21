@@ -30,6 +30,20 @@ export class PrescriptionService {
     return this.http.put<Prescription>(`${this.baseUrl}/${id}`, data);
   }
 
+  search(query: string, params?: Omit<PaginationParams, 'search'>): Observable<PaginatedResponse<Prescription>> {
+    const requestParams: PaginationParams = {
+      page: params?.page ?? 1,
+      pageSize: params?.pageSize ?? 20,
+      sortBy: params?.sortBy,
+      sortOrder: params?.sortOrder,
+      search: query,
+    };
+
+    return this.http.get<PaginatedResponse<Prescription>>(this.baseUrl, {
+      params: toHttpParams(requestParams),
+    });
+  }
+
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }

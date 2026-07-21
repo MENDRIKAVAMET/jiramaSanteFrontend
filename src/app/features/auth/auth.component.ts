@@ -87,19 +87,26 @@ export class AuthComponent {
     this.errorMessage.set(null);
     const { email, password } = this.form.getRawValue() as { email: string; password: string };
     this.auth.login({ email, password }).subscribe({
-      next: (session) => {
+      next: () => {
         this.loading.set(false);
         const redirect = this.route.snapshot.queryParamMap.get('redirect');
-        this.router.navigateByUrl(redirect ?? getDefaultRouteForRole(session.user.role));
+        const user = this.auth.currentUser();
+        this.router.navigateByUrl(redirect ?? (user ? getDefaultRouteForRole(user.role) : '/dashboard'));
       },
       error: (err) => {
         this.loading.set(false);
         const status = err?.status ?? 0;
-        this.errorMessage.set(
-          status === 401 ? 'Email ou mot de passe incorrect.' :
-          status === 403 ? "Votre compte est désactivé." :
-          status === 0 ? 'Serveur injoignable.' : 'Une erreur est survenue.'
-        );
+        let message = 'Une erreur est survenue.';
+
+        if (status === 401) {
+          message = 'Email ou mot de passe incorrect.';
+        } else if (status === 403) {
+          message = 'Votre compte est désactivé.';
+        } else if (status === 0) {
+          message = 'Serveur injoignable.';
+        }
+
+        this.errorMessage.set(message);
       },
     });
   }

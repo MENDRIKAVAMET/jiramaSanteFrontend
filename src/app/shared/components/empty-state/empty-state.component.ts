@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
-  selector: 'app-empty-state',
+  selector: 'app-empty-state, empty-state',
   standalone: true,
   imports: [MatIconModule],
   template: `

@@ -13,3 +13,12 @@ export interface Consultation {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface ConsultationListItem {
+  id: string;
+  reference: string;
+  doctor: string;
+  patient: string;
+  date: string;
+  status: string;
+}

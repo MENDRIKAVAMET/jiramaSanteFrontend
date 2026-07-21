@@ -8,7 +8,12 @@ export class SessionService {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
-  toggleSidebar(): void {}
+  toggleSidebar(): void {
+    const sidebar = document.querySelector<HTMLElement>('[data-sidebar-toggle]');
+    if (sidebar) {
+      sidebar.classList.toggle('open');
+    }
+  }
 
   navigateToDefault(): void {
     const role = this.auth.userRole();
@@ -21,9 +26,7 @@ export class SessionService {
 
   logout(): void {
     const wasAuthenticated = this.auth.isAuthenticated();
-    this.auth.logout().subscribe({
-      next: () => { if (wasAuthenticated) this.navigateToLogin(); },
-      error: () => { if (wasAuthenticated) this.navigateToLogin(); },
-    });
+    this.auth.logout();
+    if (wasAuthenticated) this.navigateToLogin();
   }
 }

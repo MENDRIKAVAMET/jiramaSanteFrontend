@@ -23,7 +23,29 @@ export class ConsultationService {
   }
 
   update(id: string, data: Partial<Consultation>): Observable<Consultation> {
-    return this.http.put<Consultation>(`${this.baseUrl}/${id}`, data);
+    return this.http.patch<Consultation>(`${this.baseUrl}/${id}`, data);
+  }
+
+  getByDoctor(): Observable<Consultation[]> {
+    return this.http.get<Consultation[]>(`${this.baseUrl}/my-consultations`);
+  }
+
+  getUpcoming(): Observable<Consultation[]> {
+    return this.http.get<Consultation[]>(`${this.baseUrl}/upcoming`);
+  }
+
+  search(query: string, params?: Omit<PaginationParams, 'search'>): Observable<PaginatedResponse<Consultation>> {
+    const requestParams: PaginationParams = {
+      page: params?.page ?? 1,
+      pageSize: params?.pageSize ?? 20,
+      sortBy: params?.sortBy,
+      sortOrder: params?.sortOrder,
+      search: query,
+    };
+
+    return this.http.get<PaginatedResponse<Consultation>>(this.baseUrl, {
+      params: toHttpParams(requestParams),
+    });
   }
 
   delete(id: string): Observable<void> {
