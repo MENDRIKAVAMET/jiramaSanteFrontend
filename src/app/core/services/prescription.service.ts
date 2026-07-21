@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
-import { PaginatedResponse, PaginationParams, Prescription, PrescriptionItem } from '../models';
+import { PaginatedResponse, PaginationParams, Prescription } from '../models';
 import { toHttpParams } from './http-utils';
 
 @Injectable({ providedIn: 'root' })
@@ -16,10 +16,6 @@ export class PrescriptionService {
 
   getById(id: string): Observable<Prescription> {
     return this.http.get<Prescription>(`${this.baseUrl}/${id}`);
-  }
-
-  getItems(id: string): Observable<PrescriptionItem[]> {
-    return this.http.get<PrescriptionItem[]>(`${this.baseUrl}/${id}/items`);
   }
 
   create(data: Omit<Prescription, 'id' | 'createdAt' | 'updatedAt'>): Observable<Prescription> {

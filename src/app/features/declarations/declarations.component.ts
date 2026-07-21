@@ -112,7 +112,15 @@ export class DeclarationsComponent implements OnInit {
 
     request.subscribe({
       next: (response) => {
-        this.data.set(response.items);
+        this.data.set(response.items.map((declaration: any) => ({
+          id: declaration.id,
+          reference: declaration.number,
+          agentName: declaration.agent
+            ? `${declaration.agent.firstName} ${declaration.agent.lastName}`
+            : '—',
+          status: declaration.status,
+          declarationDate: declaration.date,
+        })));
         this.loading.set(false);
       },
       error: () => {

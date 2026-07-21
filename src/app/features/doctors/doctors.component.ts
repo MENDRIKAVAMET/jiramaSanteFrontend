@@ -49,11 +49,11 @@ import { Doctor } from '@core/models';
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Spécialité</mat-label>
-            <input matInput formControlName="specialization" />
+            <input matInput formControlName="specialty" />
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Numéro de licence</mat-label>
-            <input matInput formControlName="licenseNumber" />
+            <input matInput formControlName="registrationNumber" />
           </mat-form-field>
           <div class="form-actions">
             <button mat-stroked-button type="button" (click)="cancelEdit()">Annuler</button>
@@ -74,9 +74,9 @@ import { Doctor } from '@core/models';
                 <th mat-header-cell *matHeaderCellDef>Nom</th>
                 <td mat-cell *matCellDef="let row">{{ row.lastName }}</td>
               </ng-container>
-              <ng-container matColumnDef="specialization">
+              <ng-container matColumnDef="specialty">
                 <th mat-header-cell *matHeaderCellDef>Spécialité</th>
-                <td mat-cell *matCellDef="let row">{{ row.specialization }}</td>
+                <td mat-cell *matCellDef="let row">{{ row.specialty }}</td>
               </ng-container>
               <ng-container matColumnDef="email">
                 <th mat-header-cell *matHeaderCellDef>Email</th>
@@ -106,14 +106,14 @@ export class DoctorsComponent implements OnInit {
   readonly data = signal<Doctor[]>([]);
   readonly showForm = signal(false);
   readonly editingId = signal<string | null>(null);
-  readonly displayedColumns = ['firstName', 'lastName', 'specialization', 'email', 'actions'];
+  readonly displayedColumns = ['firstName', 'lastName', 'specialty', 'email', 'actions'];
   readonly searchControl = new FormControl('');
   readonly form = new FormGroup({
     firstName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     lastName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
-    specialization: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    licenseNumber: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    specialty: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    registrationNumber: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
   });
 
   ngOnInit(): void {
@@ -126,7 +126,7 @@ export class DoctorsComponent implements OnInit {
 
   onCreate(): void {
     this.editingId.set(null);
-    this.form.reset({ firstName: '', lastName: '', email: '', specialization: '', licenseNumber: '' });
+    this.form.reset({ firstName: '', lastName: '', email: '', specialty: '', registrationNumber: '' });
     this.showForm.set(true);
   }
 
@@ -139,8 +139,8 @@ export class DoctorsComponent implements OnInit {
           firstName: doctor.firstName,
           lastName: doctor.lastName,
           email: doctor.email,
-          specialization: doctor.specialization,
-          licenseNumber: doctor.licenseNumber,
+          specialty: doctor.specialty,
+          registrationNumber: doctor.registrationNumber,
         });
         this.showForm.set(true);
         this.loading.set(false);
@@ -166,8 +166,8 @@ export class DoctorsComponent implements OnInit {
     this.loading.set(true);
     const payload = this.form.getRawValue();
     const request = this.editingId()
-      ? this.service.update(this.editingId()!, { ...payload, phone: null, isActive: true })
-      : this.service.create({ ...payload, phone: null, isActive: true } as Doctor);
+      ? this.service.update(this.editingId()!, { ...payload, phone: '' })
+      : this.service.create({ ...payload, phone: '' } as Doctor);
 
     request.subscribe({
       next: () => {
@@ -181,7 +181,7 @@ export class DoctorsComponent implements OnInit {
   cancelEdit(): void {
     this.showForm.set(false);
     this.editingId.set(null);
-    this.form.reset({ firstName: '', lastName: '', email: '', specialization: '', licenseNumber: '' });
+    this.form.reset({ firstName: '', lastName: '', email: '', specialty: '', registrationNumber: '' });
   }
 
   private loadDoctors(query = ''): void {

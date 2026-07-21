@@ -1,19 +1,18 @@
+import { Consultation } from './consultation.model';
+
 export interface Diagnostic {
   id: string;
   consultationId: string;
-  code: string;
-  label: string;
+  consultation?: Consultation;
   description: string;
-  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-  diagnosedAt: string;
   createdAt: string;
   updatedAt: string;
 }
 
+/** Version aplatie utilisée par le tableau de la liste des diagnostics. */
 export interface DiagnosticListItem {
   id: string;
-  reference: string;
-  description: string;
-  severity: string;
+  consultationRef: string;
+  result: string;
   date: string;
 }

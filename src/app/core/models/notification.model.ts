@@ -1,22 +1,21 @@
-import { NotificationType, NotificationChannel } from './enums.model';
+import { NotificationChannel, NotificationType } from './enums.model';
 
 export interface Notification {
   id: string;
-  userId: string;
-  type: NotificationType;
-  channel: NotificationChannel;
+  userId: string | null;
   title: string;
   message: string;
+  type: NotificationType;
+  channel: NotificationChannel;
   isRead: boolean;
-  readAt: string | null;
   createdAt: string;
 }
 
+/** Version aplatie utilisée par le tableau de la liste des notifications. */
 export interface NotificationListItem {
   id: string;
   title: string;
-  message: string;
-  type: NotificationType;
-  date: string;
+  channel: NotificationChannel;
+  sentAt: string;
   isRead: boolean;
 }

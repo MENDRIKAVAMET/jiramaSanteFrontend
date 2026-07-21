@@ -37,7 +37,7 @@ import { Position } from '@core/models';
         <form *ngIf="showForm()" [formGroup]="form" class="form-grid" (ngSubmit)="submitForm()">
           <mat-form-field appearance="outline">
             <mat-label>Nom</mat-label>
-            <input matInput formControlName="name" />
+            <input matInput formControlName="title" />
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Service</mat-label>
@@ -58,9 +58,9 @@ import { Position } from '@core/models';
                 <th mat-header-cell *matHeaderCellDef>Code</th>
                 <td mat-cell *matCellDef="let row">{{ row.code }}</td>
               </ng-container>
-              <ng-container matColumnDef="name">
+              <ng-container matColumnDef="title">
                 <th mat-header-cell *matHeaderCellDef>Nom</th>
-                <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+                <td mat-cell *matCellDef="let row">{{ row.title }}</td>
               </ng-container>
               <ng-container matColumnDef="serviceName">
                 <th mat-header-cell *matHeaderCellDef>Service</th>
@@ -90,10 +90,10 @@ export class PositionsComponent implements OnInit {
   readonly data = signal<Position[]>([]);
   readonly showForm = signal(false);
   readonly editingId = signal<string | null>(null);
-  readonly displayedColumns = ['code', 'name', 'serviceName', 'actions'];
+  readonly displayedColumns = ['code', 'title', 'serviceName', 'actions'];
   readonly searchControl = new FormControl('');
   readonly form = new FormGroup({
-    name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    title: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     serviceId: new FormControl('', { nonNullable: true }),
   });
 
@@ -107,7 +107,7 @@ export class PositionsComponent implements OnInit {
 
   onCreate(): void {
     this.editingId.set(null);
-    this.form.reset({ name: '', serviceId: '' });
+    this.form.reset({ title: '', serviceId: '' });
     this.showForm.set(true);
   }
 
@@ -116,7 +116,7 @@ export class PositionsComponent implements OnInit {
     this.service.getById(id).subscribe({
       next: (position) => {
         this.editingId.set(id);
-        this.form.reset({ name: position.name, serviceId: position.serviceId ?? '' });
+        this.form.reset({ title: position.title, serviceId: position.serviceId ?? '' });
         this.showForm.set(true);
         this.loading.set(false);
       },
@@ -156,7 +156,7 @@ export class PositionsComponent implements OnInit {
   cancelEdit(): void {
     this.showForm.set(false);
     this.editingId.set(null);
-    this.form.reset({ name: '', serviceId: '' });
+    this.form.reset({ title: '', serviceId: '' });
   }
 
   private loadPositions(query = ''): void {
@@ -167,7 +167,10 @@ export class PositionsComponent implements OnInit {
 
     request.subscribe({
       next: (response) => {
-        this.data.set(response.items);
+        this.data.set(response.items.map((position) => ({
+          ...position,
+          serviceName: position.service?.name ?? '—',
+        })) as any);
         this.loading.set(false);
       },
       error: () => {

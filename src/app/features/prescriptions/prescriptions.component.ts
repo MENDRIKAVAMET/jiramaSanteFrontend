@@ -109,9 +109,11 @@ export class PrescriptionsComponent implements OnInit {
       next: (response) => {
         this.data.set(response.items.map((prescription) => ({
           id: prescription.id,
-          reference: prescription.id,
-          doctor: prescription.doctorName,
-          date: prescription.prescribedAt,
+          reference: prescription.id.slice(0, 8),
+          patientName: prescription.consultation?.declaration?.agent
+            ? `${prescription.consultation.declaration.agent.firstName} ${prescription.consultation.declaration.agent.lastName}`
+            : '—',
+          issuedAt: prescription.createdAt,
           status: prescription.status,
         })));
         this.loading.set(false);

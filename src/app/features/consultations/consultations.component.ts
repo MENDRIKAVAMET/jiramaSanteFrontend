@@ -113,11 +113,15 @@ export class ConsultationsComponent implements OnInit {
       next: (response) => {
         this.data.set(response.items.map((consultation) => ({
           id: consultation.id,
-          reference: consultation.id,
-          doctor: consultation.doctorName,
-          patient: consultation.agentName,
-          date: consultation.consultationDate,
-          status: consultation.type,
+          reference: consultation.id.slice(0, 8),
+          patientName: consultation.declaration?.agent
+            ? `${consultation.declaration.agent.firstName} ${consultation.declaration.agent.lastName}`
+            : '—',
+          doctorName: consultation.doctor
+            ? `Dr ${consultation.doctor.firstName} ${consultation.doctor.lastName}`
+            : '—',
+          date: consultation.scheduledAt,
+          status: consultation.status,
         })));
         this.loading.set(false);
       },

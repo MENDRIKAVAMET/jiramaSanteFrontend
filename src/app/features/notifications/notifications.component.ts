@@ -101,9 +101,8 @@ export class NotificationsComponent implements OnInit {
         this.data.set(response.items.map((notification) => ({
           id: notification.id,
           title: notification.title,
-          message: notification.message,
-          type: notification.type,
-          date: notification.createdAt,
+          channel: notification.channel,
+          sentAt: notification.createdAt,
           isRead: notification.isRead,
         })));
         this.loading.set(false);

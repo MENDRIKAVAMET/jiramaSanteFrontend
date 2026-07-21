@@ -90,10 +90,9 @@ export class DiagnosticsComponent implements OnInit {
       next: (response) => {
         this.data.set(response.items.map((diagnostic) => ({
           id: diagnostic.id,
-          reference: diagnostic.id,
-          description: diagnostic.description,
-          severity: diagnostic.severity,
-          date: diagnostic.diagnosedAt,
+          consultationRef: diagnostic.consultationId.slice(0, 8),
+          result: diagnostic.description,
+          date: diagnostic.createdAt,
         })));
         this.loading.set(false);
       },

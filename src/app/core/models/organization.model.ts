@@ -3,31 +3,26 @@ export interface Direction {
   code: string;
   name: string;
   description: string | null;
-  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface Service {
   id: string;
-  directionId: string;
-  directionName: string;
-  code: string;
+  code: string | null;
   name: string;
-  description: string | null;
-  isActive: boolean;
+  directionId?: string | null;
+  direction?: Direction | null;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface Position {
   id: string;
-  serviceId: string;
-  serviceName: string;
-  code: string;
-  name: string;
-  description: string | null;
-  isActive: boolean;
+  code: string | null;
+  title: string;
+  serviceId?: string | null;
+  service?: Service | null;
   createdAt: string;
   updatedAt: string;
 }

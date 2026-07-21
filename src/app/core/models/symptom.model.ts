@@ -1,11 +1,12 @@
+import { SymptomSeverity } from './enums.model';
+
 export interface Symptom {
   id: string;
-  code: string;
+  code: string | null;
   name: string;
-  category: string;
+  category: string | null;
   description: string | null;
-  severity: 'LOW' | 'MEDIUM' | 'HIGH';
-  isActive: boolean;
+  severity: SymptomSeverity;
   createdAt: string;
   updatedAt: string;
 }

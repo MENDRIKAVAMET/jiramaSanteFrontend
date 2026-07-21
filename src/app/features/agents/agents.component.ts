@@ -59,6 +59,10 @@ import { Agent } from '@core/models';
             <mat-label>Téléphone</mat-label>
             <input matInput formControlName="phone" />
           </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Poste</mat-label>
+            <input matInput formControlName="poste" />
+          </mat-form-field>
           <div class="form-actions">
             <button mat-stroked-button type="button" (click)="cancelEdit()">Annuler</button>
             <button mat-flat-button color="primary" type="submit" [disabled]="loading()">Enregistrer</button>
@@ -136,6 +140,7 @@ export class AgentsComponent implements OnInit {
     lastName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
     phone: new FormControl('', { nonNullable: true }),
+    poste: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
   });
 
   ngOnInit(): void {
@@ -148,7 +153,7 @@ export class AgentsComponent implements OnInit {
 
   onCreate(): void {
     this.editingId.set(null);
-    this.form.reset({ matricule: '', firstName: '', lastName: '', email: '', phone: '' });
+    this.form.reset({ matricule: '', firstName: '', lastName: '', email: '', phone: '', poste: '' });
     this.showForm.set(true);
   }
 
@@ -163,6 +168,7 @@ export class AgentsComponent implements OnInit {
           lastName: agent.lastName,
           email: agent.email,
           phone: agent.phone ?? '',
+          poste: agent.poste ?? '',
         });
         this.showForm.set(true);
         this.loading.set(false);
@@ -189,8 +195,8 @@ export class AgentsComponent implements OnInit {
     const payload = this.form.getRawValue();
 
     const request = this.editingId()
-      ? this.service.update(this.editingId()!, { ...payload, phone: payload.phone || null })
-      : this.service.create({ ...payload, phone: payload.phone || null, directionId: '', serviceId: '', positionId: '', isActive: true, hiredAt: new Date().toISOString(), directionName: '', serviceName: '', positionName: '' } as Agent);
+      ? this.service.update(this.editingId()!, payload)
+      : this.service.create({ ...payload, hireDate: new Date().toISOString() } as unknown as Agent);
 
     request.subscribe({
       next: () => {
@@ -204,7 +210,7 @@ export class AgentsComponent implements OnInit {
   cancelEdit(): void {
     this.showForm.set(false);
     this.editingId.set(null);
-    this.form.reset({ matricule: '', firstName: '', lastName: '', email: '', phone: '' });
+    this.form.reset({ matricule: '', firstName: '', lastName: '', email: '', phone: '', poste: '' });
   }
 
   private loadAgents(query = ''): void {
@@ -215,7 +221,11 @@ export class AgentsComponent implements OnInit {
 
     request.subscribe({
       next: (response) => {
-        this.data.set(response.items);
+        this.data.set(response.items.map((agent) => ({
+          ...agent,
+          directionName: agent.direction?.name ?? '—',
+          serviceName: agent.service?.name ?? '—',
+        })) as any);
         this.loading.set(false);
       },
       error: () => {

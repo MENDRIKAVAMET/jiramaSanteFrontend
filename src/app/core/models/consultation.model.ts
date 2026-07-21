@@ -1,24 +1,26 @@
-import { ConsultationType } from './enums.model';
+import { Declaration } from './declaration.model';
+import { Doctor } from './doctor.model';
+import { ConsultationStatus } from './enums.model';
 
 export interface Consultation {
   id: string;
   declarationId: string;
-  doctorId: string;
-  doctorName: string;
-  agentId: string;
-  agentName: string;
-  type: ConsultationType;
-  consultationDate: string;
-  notes: string;
+  declaration?: Declaration;
+  doctorId?: string | null;
+  doctor?: Doctor | null;
+  scheduledAt: string;
+  status: ConsultationStatus;
+  notes: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
+/** Version aplatie utilisée par le tableau de la liste des consultations. */
 export interface ConsultationListItem {
   id: string;
   reference: string;
-  doctor: string;
-  patient: string;
+  patientName: string;
+  doctorName: string;
   date: string;
-  status: string;
+  status: ConsultationStatus;
 }

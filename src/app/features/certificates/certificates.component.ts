@@ -109,9 +109,11 @@ export class CertificatesComponent implements OnInit {
       next: (response) => {
         this.data.set(response.items.map((certificate) => ({
           id: certificate.id,
-          reference: certificate.id,
+          reference: certificate.id.slice(0, 8),
           type: certificate.type,
-          issuedTo: certificate.agentName,
+          issuedTo: certificate.declaration?.agent
+            ? `${certificate.declaration.agent.firstName} ${certificate.declaration.agent.lastName}`
+            : '—',
           date: certificate.issuedAt,
         })));
         this.loading.set(false);

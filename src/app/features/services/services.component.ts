@@ -167,7 +167,10 @@ export class ServicesComponent implements OnInit {
 
     request.subscribe({
       next: (response) => {
-        this.data.set(response.items);
+        this.data.set(response.items.map((service) => ({
+          ...service,
+          directionName: service.direction?.name ?? '—',
+        })) as any);
         this.loading.set(false);
       },
       error: () => {

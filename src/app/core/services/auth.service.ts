@@ -42,11 +42,25 @@ export class AuthService {
         this.persistTokens({ accessToken: token });
         const payload = this.decodeJwt(token);
         if (payload) {
+          // Le JWT ne contient que sub/role/exp/iat : on pose un utilisateur minimal
+          // tout de suite (pour ne pas bloquer l'UI), puis on va chercher le vrai
+          // profil (prénom, nom, matricule, etc.) qui vit en base.
           const user = this.buildUserFromJwt(payload);
           if (user) this._currentUser.set(user);
         }
+        this.fetchAndSetProfile();
       }),
     );
+  }
+
+  /** Recharge le profil complet (prénom, nom, matricule...) depuis /profile. */
+  private fetchAndSetProfile(): void {
+    this.http.get<User>(`${environment.apiUrl}/profile`).subscribe({
+      next: (profile) => this._currentUser.set(profile),
+      error: () => {
+        // On garde l'utilisateur minimal décodé du JWT si /profile échoue.
+      },
+    });
   }
 
   logout(): void {
@@ -83,6 +97,7 @@ export class AuthService {
         this._tokens.set({ accessToken, expiresIn: payload.exp - payload.iat });
         const user = this.buildUserFromJwt(payload);
         if (user) this._currentUser.set(user);
+        this.fetchAndSetProfile();
       } else {
         this.clearSession();
       }

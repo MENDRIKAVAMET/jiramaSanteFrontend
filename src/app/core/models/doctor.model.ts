@@ -2,11 +2,11 @@ export interface Doctor {
   id: string;
   firstName: string;
   lastName: string;
+  phone: string;
   email: string;
-  phone: string | null;
-  specialization: string;
-  licenseNumber: string;
-  isActive: boolean;
+  specialty: string;
+  registrationNumber: string;
+  userId?: string | null;
   createdAt: string;
   updatedAt: string;
 }

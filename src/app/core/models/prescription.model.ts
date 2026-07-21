@@ -1,34 +1,24 @@
+import { Consultation } from './consultation.model';
 import { PrescriptionStatus } from './enums.model';
 
 export interface Prescription {
   id: string;
   consultationId: string;
-  doctorId: string;
-  doctorName: string;
-  agentId: string;
-  agentName: string;
+  consultation?: Consultation;
+  medication: string;
+  dosage: string;
+  duration: string;
+  instructions: string | null;
   status: PrescriptionStatus;
-  prescribedAt: string;
-  validUntil: string | null;
-  notes: string;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface PrescriptionItem {
-  id: string;
-  prescriptionId: string;
-  medicationName: string;
-  dosage: string;
-  frequency: string;
-  duration: string;
-  quantity: number;
-}
-
+/** Version aplatie utilisée par le tableau de la liste des prescriptions. */
 export interface PrescriptionListItem {
   id: string;
   reference: string;
-  doctor: string;
-  date: string;
+  patientName: string;
+  issuedAt: string;
   status: PrescriptionStatus;
 }

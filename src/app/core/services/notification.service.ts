@@ -18,6 +18,14 @@ export class NotificationService {
     return this.http.get<Notification>(`${this.baseUrl}/${id}`);
   }
 
+  create(data: Omit<Notification, 'id' | 'createdAt' | 'readAt'>): Observable<Notification> {
+    return this.http.post<Notification>(this.baseUrl, data);
+  }
+
+  update(id: string, data: Partial<Notification>): Observable<Notification> {
+    return this.http.patch<Notification>(`${this.baseUrl}/${id}`, data);
+  }
+
   search(query: string, params?: Omit<PaginationParams, 'search'>): Observable<PaginatedResponse<Notification>> {
     const requestParams: PaginationParams = {
       page: params?.page ?? 1,
