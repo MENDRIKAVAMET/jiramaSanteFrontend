@@ -11,6 +11,15 @@
   .welcome-icon { font-size: 80px; width: 80px; height: 80px; opacity: 0.2; flex-shrink: 0; }
 }
 
+.error-banner {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 20px; margin-bottom: 24px;
+  background: #fdecea; border: 1px solid #f5c6c0; border-radius: 12px;
+  color: #b71c1c; font-size: 14px;
+  .error-icon { color: #f44336; flex-shrink: 0; }
+  span { flex: 1; }
+}
+
 .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px; }
 
 .secondary-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }

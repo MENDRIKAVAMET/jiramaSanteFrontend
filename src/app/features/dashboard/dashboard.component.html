@@ -17,10 +17,18 @@
   <div class="welcome-banner fade-in">
     <div class="welcome-content">
       <h2 class="welcome-title">Bonjour, {{ firstName() }} !</h2>
-      <p class="welcome-subtitle">Voici un résumé de l'activité sanitaire. Les données seront disponibles une fois le backend NestJS connecté.</p>
+      <p class="welcome-subtitle">Voici un résumé de l'activité sanitaire.</p>
     </div>
     <mat-icon class="welcome-icon">health_and_safety</mat-icon>
   </div>
+
+  @if (loadError()) {
+    <div class="error-banner fade-in">
+      <mat-icon class="error-icon">error_outline</mat-icon>
+      <span>Impossible de charger les données du tableau de bord. Vérifiez que le serveur est bien accessible, puis réessayez.</span>
+      <button mat-button color="warn" (click)="refresh()">Réessayer</button>
+    </div>
+  }
 
   <!-- Stat cards -->
   <div class="stats-grid">
@@ -62,7 +70,7 @@
             { label: 'Certificats', data: trend.certificates, borderColor: '#f44336', fill: true, tension: 0.3 }
           ]"></app-line-chart>
         } @else {
-          <div class="chart-placeholder"><mat-icon class="chart-icon">show_chart</mat-icon><p class="chart-text">Graphique disponible après connexion au backend</p></div>
+          <div class="chart-placeholder"><mat-icon class="chart-icon">show_chart</mat-icon><p class="chart-text">Aucune donnée disponible pour le moment</p></div>
         }
       </div>
     </mat-card>
@@ -73,7 +81,7 @@
         @if (statusDistribution(); as dist) {
           <app-doughnut-chart [labels]="dist.labels" [data]="dist.data" [colors]="dist.colors"></app-doughnut-chart>
         } @else {
-          <div class="chart-placeholder"><mat-icon class="chart-icon">donut_large</mat-icon><p class="chart-text">Graphique disponible après connexion au backend</p></div>
+          <div class="chart-placeholder"><mat-icon class="chart-icon">donut_large</mat-icon><p class="chart-text">Aucune donnée disponible pour le moment</p></div>
         }
       </div>
     </mat-card>
@@ -87,7 +95,7 @@
         @if (declarationChart(); as chart) {
           <app-bar-chart [labels]="chart.labels" [data]="chart.submitted" label="Déclarations soumises" [colors]="['#00897b','#4db6ac','#80cbc4','#b2dfdb','#e0f2f1','#00897b','#4db6ac','#80cbc4','#b2dfdb','#e0f2f1','#00897b','#4db6ac']"></app-bar-chart>
         } @else {
-          <div class="chart-placeholder"><mat-icon class="chart-icon">bar_chart</mat-icon><p class="chart-text">Graphique disponible après connexion au backend</p></div>
+          <div class="chart-placeholder"><mat-icon class="chart-icon">bar_chart</mat-icon><p class="chart-text">Aucune donnée disponible pour le moment</p></div>
         }
       </div>
     </mat-card>

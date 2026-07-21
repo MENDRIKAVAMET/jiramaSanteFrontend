@@ -56,6 +56,7 @@ export class DashboardComponent implements OnInit {
   readonly recentConsultations = signal<RecentConsultation[]>([]);
   readonly activities = signal<DashboardActivity[]>([]);
   readonly notifications = signal<DashboardNotification[]>([]);
+  readonly loadError = signal(false);
 
   readonly unreadNotifications = computed(() => this.notifications().filter((n) => !n.isRead).length);
 
@@ -72,13 +73,13 @@ export class DashboardComponent implements OnInit {
   readonly consultationColumns = ['patientName', 'doctorName', 'type', 'date', 'status'];
 
   readonly statusLabels: Record<string, string> = {
-    DRAFT: 'Brouillon', SUBMITTED: 'Soumise', IN_REVIEW: 'En revue',
-    APPROVED: 'Approuvée', REJECTED: 'Rejetée',
+    nouveau: 'Nouveau', en_cours: 'En cours', traite: 'Traité',
+    clos: 'Clos', annule: 'Annulé',
   };
 
   readonly statusColors: Record<string, string> = {
-    DRAFT: '#b0bec5', SUBMITTED: '#00897b', IN_REVIEW: '#1e88e5',
-    APPROVED: '#4caf50', REJECTED: '#f44336',
+    nouveau: '#00897b', en_cours: '#1e88e5', traite: '#4caf50',
+    clos: '#78909c', annule: '#f44336',
   };
 
   ngOnInit(): void {
@@ -87,6 +88,7 @@ export class DashboardComponent implements OnInit {
 
   private loadDashboardData(): void {
     this.loading.set(true);
+    this.loadError.set(false);
     this.dashboardService.getDashboardData().subscribe({
       next: (data) => {
         this.stats.set(data.stats);
@@ -99,7 +101,10 @@ export class DashboardComponent implements OnInit {
         this.notifications.set(data.notifications);
         this.loading.set(false);
       },
-      error: () => { this.loading.set(false); },
+      error: () => {
+        this.loading.set(false);
+        this.loadError.set(true);
+      },
     });
   }
 
