@@ -1,21 +1,23 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
 
 import { PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent } from '@shared/components';
-import { CertificateService } from '@core/services';
-import { CertificateListItem } from '@core/models';
+import { CertificateService, DeclarationService, DoctorService } from '@core/services';
+import { AuthService } from '@core/services/auth.service';
+import { CertificateListItem, DeclarationListItem, Doctor, CertificateType, CERTIFICATE_TYPE_LABELS } from '@core/models';
 
 @Component({
   selector: 'app-certificates',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatIconModule, MatButtonModule, MatInputModule, MatTableModule, MatToolbarModule, PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent],
+  imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatIconModule, MatButtonModule, MatInputModule, MatSelectModule, MatTableModule, MatToolbarModule, PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent],
   template: `
     <div class="page-container">
       <app-page-header icon="verified" title="Certificats médicaux" subtitle="Arrêts maladie, aptitudes, évacuations"></app-page-header>
@@ -29,11 +31,50 @@ import { CertificateListItem } from '@core/models';
             <button mat-flat-button color="primary" (click)="onSearch()"><mat-icon>search</mat-icon> Rechercher</button>
           </div>
           <span class="spacer"></span>
-          <button mat-flat-button color="primary" (click)="onCreate()"><mat-icon>add</mat-icon> Nouveau certificat</button>
+          @if (auth.isAdmin() || auth.isMedecin()) {
+            <button mat-flat-button color="primary" (click)="onCreate()"><mat-icon>add</mat-icon> Nouveau certificat</button>
+          }
         </mat-toolbar>
       </mat-card>
 
       <mat-card class="content-card">
+        <form *ngIf="showForm()" [formGroup]="form" class="form-grid" (ngSubmit)="submitForm()">
+          <mat-form-field appearance="outline">
+            <mat-label>Déclaration</mat-label>
+            <mat-select formControlName="declarationId">
+              <mat-option *ngFor="let d of declarations()" [value]="d.id">{{ d.reference }} — {{ d.agentName }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Médecin</mat-label>
+            <mat-select formControlName="doctorId">
+              <mat-option *ngFor="let doc of doctors()" [value]="doc.id">Dr {{ doc.firstName }} {{ doc.lastName }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Type</mat-label>
+            <mat-select formControlName="type">
+              <mat-option *ngFor="let t of certificateTypes" [value]="t.value">{{ t.label }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Valide du</mat-label>
+            <input matInput type="date" formControlName="validFrom" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Valide au</mat-label>
+            <input matInput type="date" formControlName="validTo" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Contenu</mat-label>
+            <textarea matInput rows="4" formControlName="content"></textarea>
+          </mat-form-field>
+          <div class="form-actions">
+            <button mat-stroked-button type="button" (click)="cancelEdit()">Annuler</button>
+            <button mat-flat-button color="primary" type="submit" [disabled]="loading()">Enregistrer</button>
+          </div>
+        </form>
+
         <loading-spinner *ngIf="loading()"></loading-spinner>
         <ng-container *ngIf="!loading()">
           <empty-state *ngIf="data().length === 0" title="Aucune donnée" description="Aucun certificat disponible pour le moment."></empty-state>
@@ -45,7 +86,7 @@ import { CertificateListItem } from '@core/models';
               </ng-container>
               <ng-container matColumnDef="type">
                 <th mat-header-cell *matHeaderCellDef>Type</th>
-                <td mat-cell *matCellDef="let row">{{ row.type }}</td>
+                <td mat-cell *matCellDef="let row">{{ typeLabel(row.type) }}</td>
               </ng-container>
               <ng-container matColumnDef="issuedTo">
                 <th mat-header-cell *matHeaderCellDef>Dossier</th>
@@ -59,6 +100,12 @@ import { CertificateListItem } from '@core/models';
                 <th mat-header-cell *matHeaderCellDef>Actions</th>
                 <td mat-cell *matCellDef="let row">
                   <button mat-icon-button color="primary" (click)="onView(row.id)"><mat-icon>visibility</mat-icon></button>
+                  @if (auth.isAdmin() || auth.isMedecin()) {
+                    <button mat-icon-button color="primary" (click)="onEdit(row.id)"><mat-icon>edit</mat-icon></button>
+                  }
+                  @if (auth.isAdmin()) {
+                    <button mat-icon-button color="warn" (click)="onDelete(row.id)"><mat-icon>delete</mat-icon></button>
+                  }
                 </td>
               </ng-container>
 
@@ -70,14 +117,32 @@ import { CertificateListItem } from '@core/models';
       </mat-card>
     </div>
   `,
-  styles: [`.toolbar-card { margin-bottom: 16px; } .search { display:flex; gap:8px; align-items:center; } .spacer { flex: 1 1 auto; } .content-card { padding: 16px; } .table-wrapper { overflow: auto; }`],
+  styles: [`.toolbar-card { margin-bottom: 16px; } .search { display:flex; gap:8px; align-items:center; } .spacer { flex: 1 1 auto; } .content-card { padding: 16px; } .table-wrapper { overflow: auto; } .form-grid { display:grid; grid-template-columns: repeat(2, 1fr); gap: 8px 16px; margin-bottom: 16px; } .full-width { grid-column: 1 / -1; } .form-actions { grid-column: 1 / -1; display:flex; justify-content:flex-end; gap: 8px; }`],
 })
 export class CertificatesComponent implements OnInit {
   private readonly service = inject(CertificateService);
+  private readonly declarationService = inject(DeclarationService);
+  private readonly doctorService = inject(DoctorService);
+  readonly auth = inject(AuthService);
+
   readonly loading = signal(false);
   readonly data = signal<CertificateListItem[]>([]);
+  readonly showForm = signal(false);
+  readonly editingId = signal<string | null>(null);
+  readonly declarations = signal<DeclarationListItem[]>([]);
+  readonly doctors = signal<Doctor[]>([]);
   readonly displayedColumns = ['reference', 'type', 'issuedTo', 'date', 'actions'];
   readonly searchControl = new FormControl('');
+  readonly certificateTypes = Object.entries(CERTIFICATE_TYPE_LABELS).map(([value, label]) => ({ value, label }));
+
+  readonly form = new FormGroup({
+    declarationId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    doctorId: new FormControl('', { nonNullable: true }),
+    type: new FormControl<CertificateType>('repos', { nonNullable: true, validators: [Validators.required] }),
+    content: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    validFrom: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    validTo: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+  });
 
   ngOnInit(): void {
     this.loadCertificates();
@@ -88,7 +153,31 @@ export class CertificatesComponent implements OnInit {
   }
 
   onCreate(): void {
-    console.warn('Create certificate workflow is not implemented yet.');
+    this.editingId.set(null);
+    this.form.reset({ declarationId: '', doctorId: '', type: 'repos', content: '', validFrom: '', validTo: '' });
+    this.loadFormOptions();
+    this.showForm.set(true);
+  }
+
+  onEdit(id: string): void {
+    this.loading.set(true);
+    this.loadFormOptions();
+    this.service.getById(id).subscribe({
+      next: (certificate) => {
+        this.editingId.set(id);
+        this.form.reset({
+          declarationId: certificate.declarationId,
+          doctorId: certificate.doctorId ?? '',
+          type: certificate.type,
+          content: certificate.content,
+          validFrom: certificate.validFrom?.slice(0, 10) ?? '',
+          validTo: certificate.validTo?.slice(0, 10) ?? '',
+        });
+        this.showForm.set(true);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
   }
 
   onView(id: string): void {
@@ -96,6 +185,66 @@ export class CertificatesComponent implements OnInit {
     this.service.getById(id).subscribe({
       next: () => this.loading.set(false),
       error: () => this.loading.set(false),
+    });
+  }
+
+  onDelete(id: string): void {
+    if (!confirm('Supprimer ce certificat ?')) {
+      return;
+    }
+    this.loading.set(true);
+    this.service.delete(id).subscribe({
+      next: () => this.loadCertificates(this.searchControl.value?.trim() ?? ''),
+      error: () => this.loading.set(false),
+    });
+  }
+
+  submitForm(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    this.loading.set(true);
+    const raw = this.form.getRawValue();
+    const payload: any = {
+      declarationId: raw.declarationId,
+      doctorId: raw.doctorId || null,
+      type: raw.type,
+      content: raw.content,
+      validFrom: raw.validFrom,
+      validTo: raw.validTo,
+    };
+
+    const request = this.editingId()
+      ? this.service.update(this.editingId()!, payload)
+      : this.service.create(payload);
+
+    request.subscribe({
+      next: () => {
+        this.cancelEdit();
+        this.loadCertificates(this.searchControl.value?.trim() ?? '');
+      },
+      error: () => this.loading.set(false),
+    });
+  }
+
+  cancelEdit(): void {
+    this.showForm.set(false);
+    this.editingId.set(null);
+    this.form.reset({ declarationId: '', doctorId: '', type: 'repos', content: '', validFrom: '', validTo: '' });
+  }
+
+  typeLabel(type: CertificateType): string {
+    return CERTIFICATE_TYPE_LABELS[type] ?? type;
+  }
+
+  private loadFormOptions(): void {
+    this.declarationService.getAll({ page: 1, pageSize: 100 }).subscribe({
+      next: (response) => this.declarations.set(response.items),
+    });
+    this.doctorService.getAll({ page: 1, pageSize: 100 }).subscribe({
+      next: (response) => this.doctors.set(response.items),
     });
   }
 
