@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -10,6 +10,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 
 import { PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent } from '@shared/components';
 import { DeclarationService } from '@core/services';
+import { AuthService } from '@core/services/auth.service';
 import { DeclarationListItem } from '@core/models';
 
 @Component({
@@ -18,18 +19,22 @@ import { DeclarationListItem } from '@core/models';
   imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatIconModule, MatButtonModule, MatInputModule, MatTableModule, MatToolbarModule, PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent],
   template: `
     <div class="page-container">
-      <app-page-header icon="assignment" title="Déclarations sanitaires" subtitle="Déclaration et suivi des cas sanitaires"></app-page-header>
+      <app-page-header icon="assignment" title="Déclarations sanitaires" [subtitle]="subtitle()"></app-page-header>
 
       <mat-card class="toolbar-card">
         <mat-toolbar>
-          <div class="search">
-            <mat-form-field appearance="outline">
-              <input matInput placeholder="Rechercher" [formControl]="searchControl" (keyup.enter)="onSearch()" />
-            </mat-form-field>
-            <button mat-flat-button color="primary" (click)="onSearch()"><mat-icon>search</mat-icon> Rechercher</button>
-          </div>
+          @if (auth.isAdmin()) {
+            <div class="search">
+              <mat-form-field appearance="outline">
+                <input matInput placeholder="Rechercher" [formControl]="searchControl" (keyup.enter)="onSearch()" />
+              </mat-form-field>
+              <button mat-flat-button color="primary" (click)="onSearch()"><mat-icon>search</mat-icon> Rechercher</button>
+            </div>
+          }
           <span class="spacer"></span>
-          <button mat-flat-button color="primary" (click)="onCreate()"><mat-icon>add</mat-icon> Nouvelle déclaration</button>
+          @if (auth.isAgent()) {
+            <button mat-flat-button color="primary" (click)="onCreate()"><mat-icon>add</mat-icon> Nouvelle déclaration</button>
+          }
         </mat-toolbar>
       </mat-card>
 
@@ -75,16 +80,24 @@ import { DeclarationListItem } from '@core/models';
 })
 export class DeclarationsComponent implements OnInit {
   private readonly service = inject(DeclarationService);
+  readonly auth = inject(AuthService);
   readonly loading = signal(false);
   readonly data = signal<DeclarationListItem[]>([]);
   readonly displayedColumns = ['reference', 'agentName', 'status', 'declarationDate', 'actions'];
   readonly searchControl = new FormControl('');
+
+  readonly subtitle = computed(() => {
+    if (this.auth.isAdmin()) return 'Toutes les déclarations sanitaires';
+    if (this.auth.isMedecin()) return 'Déclarations en attente de prise en charge';
+    return 'Mes déclarations';
+  });
 
   ngOnInit(): void {
     this.loadDeclarations();
   }
 
   onSearch(): void {
+    // La recherche côté serveur n'existe que pour la liste paginée (Admin).
     this.loadDeclarations(this.searchControl.value?.trim() ?? '');
   }
 
@@ -104,28 +117,46 @@ export class DeclarationsComponent implements OnInit {
     this.onView(id);
   }
 
+  private mapRow = (declaration: any): DeclarationListItem => ({
+    id: declaration.id,
+    reference: declaration.number,
+    agentName: declaration.agent
+      ? `${declaration.agent.firstName} ${declaration.agent.lastName}`
+      : '—',
+    status: declaration.status,
+    declarationDate: declaration.date,
+  } as any);
+
   private loadDeclarations(query = ''): void {
     this.loading.set(true);
-    const request = query
-      ? this.service.search(query, { page: 1, pageSize: 20 })
-      : this.service.getAll({ page: 1, pageSize: 20 });
+
+    // Chaque rôle n'a accès qu'à un sous-ensemble de l'API côté backend :
+    // - ADMINISTRATEUR : liste paginée complète (+ recherche)
+    // - MEDECIN : déclarations en attente de prise en charge
+    // - AGENT : ses propres déclarations
+    if (this.auth.isAdmin()) {
+      const request = query
+        ? this.service.search(query, { page: 1, pageSize: 20 })
+        : this.service.getAll({ page: 1, pageSize: 20 });
+
+      request.subscribe({
+        next: (response) => {
+          this.data.set(response.items.map(this.mapRow));
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false),
+      });
+      return;
+    }
+
+    const request = this.auth.isMedecin() ? this.service.getPending() : this.service.getMyDeclarations();
 
     request.subscribe({
-      next: (response) => {
-        this.data.set(response.items.map((declaration: any) => ({
-          id: declaration.id,
-          reference: declaration.number,
-          agentName: declaration.agent
-            ? `${declaration.agent.firstName} ${declaration.agent.lastName}`
-            : '—',
-          status: declaration.status,
-          declarationDate: declaration.date,
-        })));
+      next: (items) => {
+        this.data.set((items as any[]).map(this.mapRow));
         this.loading.set(false);
       },
-      error: () => {
-        this.loading.set(false);
-      },
+      error: () => this.loading.set(false),
     });
   }
 }

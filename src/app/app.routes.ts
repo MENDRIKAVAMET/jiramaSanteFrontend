@@ -26,6 +26,7 @@ export const APP_ROUTES: Routes = [
       },
       {
         path: 'consultations',
+        canActivate: [roleGuard(['ADMINISTRATEUR', 'MEDECIN'])],
         loadComponent: () => import('@features/consultations/consultations.component').then((m) => m.ConsultationsComponent),
       },
       {
@@ -35,10 +36,12 @@ export const APP_ROUTES: Routes = [
       },
       {
         path: 'prescriptions',
+        canActivate: [roleGuard(['ADMINISTRATEUR', 'MEDECIN'])],
         loadComponent: () => import('@features/prescriptions/prescriptions.component').then((m) => m.PrescriptionsComponent),
       },
       {
         path: 'certificates',
+        canActivate: [roleGuard(['ADMINISTRATEUR', 'MEDECIN'])],
         loadComponent: () => import('@features/certificates/certificates.component').then((m) => m.CertificatesComponent),
       },
       {

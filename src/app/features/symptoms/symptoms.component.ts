@@ -36,6 +36,10 @@ import { Symptom } from '@core/models';
       <mat-card class="content-card">
         <form *ngIf="showForm()" [formGroup]="form" class="form-grid" (ngSubmit)="submitForm()">
           <mat-form-field appearance="outline">
+            <mat-label>Code</mat-label>
+            <input matInput formControlName="code" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
             <mat-label>Nom</mat-label>
             <input matInput formControlName="name" />
           </mat-form-field>
@@ -101,6 +105,7 @@ export class SymptomsComponent implements OnInit {
   readonly displayedColumns = ['code', 'name', 'category', 'severity', 'actions'];
   readonly searchControl = new FormControl('');
   readonly form = new FormGroup({
+    code: new FormControl('', { nonNullable: true }),
     name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     category: new FormControl('', { nonNullable: true }),
     severity: new FormControl('', { nonNullable: true }),
@@ -116,7 +121,7 @@ export class SymptomsComponent implements OnInit {
 
   onCreate(): void {
     this.editingId.set(null);
-    this.form.reset({ name: '', category: '', severity: '' });
+    this.form.reset({ code: '', name: '', category: '', severity: '' });
     this.showForm.set(true);
   }
 
@@ -125,7 +130,7 @@ export class SymptomsComponent implements OnInit {
     this.service.getById(id).subscribe({
       next: (symptom) => {
         this.editingId.set(id);
-        this.form.reset({ name: symptom.name, category: symptom.category ?? '', severity: symptom.severity ?? '' });
+        this.form.reset({ code: symptom.code ?? '', name: symptom.name, category: symptom.category ?? '', severity: symptom.severity ?? '' });
         this.showForm.set(true);
         this.loading.set(false);
       },
@@ -165,7 +170,7 @@ export class SymptomsComponent implements OnInit {
   cancelEdit(): void {
     this.showForm.set(false);
     this.editingId.set(null);
-    this.form.reset({ name: '', category: '', severity: '' });
+    this.form.reset({ code: '', name: '', category: '', severity: '' });
   }
 
   private loadSymptoms(query = ''): void {

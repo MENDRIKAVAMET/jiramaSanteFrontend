@@ -36,6 +36,10 @@ import { Service } from '@core/models';
       <mat-card class="content-card">
         <form *ngIf="showForm()" [formGroup]="form" class="form-grid" (ngSubmit)="submitForm()">
           <mat-form-field appearance="outline">
+            <mat-label>Code</mat-label>
+            <input matInput formControlName="code" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
             <mat-label>Nom</mat-label>
             <input matInput formControlName="name" />
           </mat-form-field>
@@ -93,6 +97,7 @@ export class ServicesComponent implements OnInit {
   readonly displayedColumns = ['code', 'name', 'directionName', 'actions'];
   readonly searchControl = new FormControl('');
   readonly form = new FormGroup({
+    code: new FormControl('', { nonNullable: true }),
     name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     directionId: new FormControl('', { nonNullable: true }),
   });
@@ -107,7 +112,7 @@ export class ServicesComponent implements OnInit {
 
   onCreate(): void {
     this.editingId.set(null);
-    this.form.reset({ name: '', directionId: '' });
+    this.form.reset({ code: '', name: '', directionId: '' });
     this.showForm.set(true);
   }
 
@@ -116,7 +121,7 @@ export class ServicesComponent implements OnInit {
     this.service.getById(id).subscribe({
       next: (service) => {
         this.editingId.set(id);
-        this.form.reset({ name: service.name, directionId: service.directionId ?? '' });
+        this.form.reset({ code: service.code ?? '', name: service.name, directionId: service.directionId ?? '' });
         this.showForm.set(true);
         this.loading.set(false);
       },
@@ -156,7 +161,7 @@ export class ServicesComponent implements OnInit {
   cancelEdit(): void {
     this.showForm.set(false);
     this.editingId.set(null);
-    this.form.reset({ name: '', directionId: '' });
+    this.form.reset({ code: '', name: '', directionId: '' });
   }
 
   private loadServices(query = ''): void {

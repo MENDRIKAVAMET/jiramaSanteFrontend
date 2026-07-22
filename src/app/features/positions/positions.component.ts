@@ -36,6 +36,10 @@ import { Position } from '@core/models';
       <mat-card class="content-card">
         <form *ngIf="showForm()" [formGroup]="form" class="form-grid" (ngSubmit)="submitForm()">
           <mat-form-field appearance="outline">
+            <mat-label>Code</mat-label>
+            <input matInput formControlName="code" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
             <mat-label>Nom</mat-label>
             <input matInput formControlName="title" />
           </mat-form-field>
@@ -93,6 +97,7 @@ export class PositionsComponent implements OnInit {
   readonly displayedColumns = ['code', 'title', 'serviceName', 'actions'];
   readonly searchControl = new FormControl('');
   readonly form = new FormGroup({
+    code: new FormControl('', { nonNullable: true }),
     title: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     serviceId: new FormControl('', { nonNullable: true }),
   });
@@ -107,7 +112,7 @@ export class PositionsComponent implements OnInit {
 
   onCreate(): void {
     this.editingId.set(null);
-    this.form.reset({ title: '', serviceId: '' });
+    this.form.reset({ code: '', title: '', serviceId: '' });
     this.showForm.set(true);
   }
 
@@ -116,7 +121,7 @@ export class PositionsComponent implements OnInit {
     this.service.getById(id).subscribe({
       next: (position) => {
         this.editingId.set(id);
-        this.form.reset({ title: position.title, serviceId: position.serviceId ?? '' });
+        this.form.reset({ code: position.code ?? '', title: position.title, serviceId: position.serviceId ?? '' });
         this.showForm.set(true);
         this.loading.set(false);
       },
@@ -156,7 +161,7 @@ export class PositionsComponent implements OnInit {
   cancelEdit(): void {
     this.showForm.set(false);
     this.editingId.set(null);
-    this.form.reset({ title: '', serviceId: '' });
+    this.form.reset({ code: '', title: '', serviceId: '' });
   }
 
   private loadPositions(query = ''): void {

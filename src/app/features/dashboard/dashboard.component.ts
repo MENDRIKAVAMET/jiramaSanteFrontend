@@ -15,6 +15,7 @@ import {
 } from '@shared/components';
 import { AuthService } from '@core/services/auth.service';
 import { DashboardService } from '@core/services/dashboard.service';
+import { NAV_ITEMS } from '@core/layouts/main-layout/nav-items';
 import {
   DashboardStats, DeclarationChartData, StatusDistributionData,
   MonthlyTrendData, RecentDeclaration, RecentConsultation,
@@ -42,7 +43,7 @@ interface QuickAction {
   styleUrls: ['./dashboard.component.scss'],
 })
 export class DashboardComponent implements OnInit {
-  private readonly auth = inject(AuthService);
+  readonly auth = inject(AuthService);
   private readonly dashboardService = inject(DashboardService);
 
   readonly firstName = signal(this.auth.currentUser()?.firstName ?? '');
@@ -71,6 +72,15 @@ export class DashboardComponent implements OnInit {
 
   readonly declarationColumns = ['reference', 'agentName', 'status', 'declarationDate'];
   readonly consultationColumns = ['patientName', 'doctorName', 'type', 'date', 'status'];
+
+  readonly quickActionsForRole = computed<QuickAction[]>(() => {
+    const role = this.auth.userRole();
+    if (!role) return [];
+    return this.quickActions.filter((action) => {
+      const navItem = NAV_ITEMS.find((item) => item.path === action.path);
+      return navItem ? navItem.roles.includes(role) : true;
+    });
+  });
 
   readonly statusLabels: Record<string, string> = {
     nouveau: 'Nouveau', en_cours: 'En cours', traite: 'Traité',

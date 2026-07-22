@@ -10,10 +10,10 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { label: 'Tableau de bord', path: '/dashboard', icon: 'dashboard', roles: ['ADMINISTRATEUR', 'MEDECIN', 'AGENT'] },
   { label: 'Déclarations', path: '/declarations', icon: 'assignment', roles: ['ADMINISTRATEUR', 'MEDECIN', 'AGENT'] },
-  { label: 'Consultations', path: '/consultations', icon: 'medical_services', roles: ['ADMINISTRATEUR', 'MEDECIN', 'AGENT'] },
+  { label: 'Consultations', path: '/consultations', icon: 'medical_services', roles: ['ADMINISTRATEUR', 'MEDECIN'] },
   { label: 'Diagnostics', path: '/diagnostics', icon: 'biotech', roles: ['ADMINISTRATEUR', 'MEDECIN'] },
-  { label: 'Prescriptions', path: '/prescriptions', icon: 'receipt_long', roles: ['ADMINISTRATEUR', 'MEDECIN', 'AGENT'] },
-  { label: 'Certificats', path: '/certificates', icon: 'verified', roles: ['ADMINISTRATEUR', 'MEDECIN', 'AGENT'] },
+  { label: 'Prescriptions', path: '/prescriptions', icon: 'receipt_long', roles: ['ADMINISTRATEUR', 'MEDECIN'] },
+  { label: 'Certificats', path: '/certificates', icon: 'verified', roles: ['ADMINISTRATEUR', 'MEDECIN'] },
   { label: 'Agents', path: '/agents', icon: 'group', roles: ['ADMINISTRATEUR'] },
   { label: 'Médecins', path: '/doctors', icon: 'local_hospital', roles: ['ADMINISTRATEUR'] },
   { label: 'Directions', path: '/directions', icon: 'account_tree', roles: ['ADMINISTRATEUR'] },
