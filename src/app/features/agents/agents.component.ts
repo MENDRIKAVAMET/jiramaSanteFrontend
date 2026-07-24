@@ -21,24 +21,14 @@ import { Agent } from '@core/models';
     PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent,
   ],
   template: `
-    <div class="page-container">
-      <app-page-header icon="group" title="Agents" subtitle="Gestion des agents JIRAMA"></app-page-header>
-
-      <mat-card class="toolbar-card">
-        <mat-toolbar>
-          <div class="search">
-            <mat-form-field appearance="outline">
-              <input matInput placeholder="Rechercher" [formControl]="searchControl" (keyup.enter)="onSearch()" />
-            </mat-form-field>
-            <button mat-flat-button color="primary" (click)="onSearch()"><mat-icon>search</mat-icon> Rechercher</button>
-          </div>
-          <span class="spacer"></span>
-          <button mat-flat-button color="primary" (click)="onCreate()"><mat-icon>add</mat-icon> Nouvel agent</button>
-        </mat-toolbar>
-      </mat-card>
-
+    <ng-container *ngIf="showForm(); else tableView">
+      <app-page-header
+        icon="group"
+        [title]="editingId() ? 'Modifier l\\'agent' : 'Nouvel agent'"
+        subtitle="Gestion des agents JIRAMA">
+      </app-page-header>
       <mat-card class="content-card">
-        <form *ngIf="showForm()" [formGroup]="form" class="form-grid" (ngSubmit)="submitForm()">
+        <form [formGroup]="form" class="form-grid" (ngSubmit)="submitForm()">
           <mat-form-field appearance="outline">
             <mat-label>Matricule</mat-label>
             <input matInput formControlName="matricule" />
@@ -68,53 +58,74 @@ import { Agent } from '@core/models';
             <button mat-flat-button color="primary" type="submit" [disabled]="loading()">Enregistrer</button>
           </div>
         </form>
-
-        <loading-spinner *ngIf="loading()"></loading-spinner>
-
-        <ng-container *ngIf="!loading()">
-          <empty-state *ngIf="data().length === 0" title="Aucune donnée" description="Aucun agent disponible pour le moment."></empty-state>
-
-          <div *ngIf="data().length > 0" class="table-wrapper">
-            <table mat-table [dataSource]="data()" class="mat-elevation-z2">
-              <ng-container matColumnDef="matricule">
-                <th mat-header-cell *matHeaderCellDef>Matricule</th>
-                <td mat-cell *matCellDef="let row">{{ row.matricule }}</td>
-              </ng-container>
-              <ng-container matColumnDef="firstName">
-                <th mat-header-cell *matHeaderCellDef>Prénom</th>
-                <td mat-cell *matCellDef="let row">{{ row.firstName }}</td>
-              </ng-container>
-              <ng-container matColumnDef="lastName">
-                <th mat-header-cell *matHeaderCellDef>Nom</th>
-                <td mat-cell *matCellDef="let row">{{ row.lastName }}</td>
-              </ng-container>
-              <ng-container matColumnDef="email">
-                <th mat-header-cell *matHeaderCellDef>Email</th>
-                <td mat-cell *matCellDef="let row">{{ row.email }}</td>
-              </ng-container>
-              <ng-container matColumnDef="directionName">
-                <th mat-header-cell *matHeaderCellDef>Direction</th>
-                <td mat-cell *matCellDef="let row">{{ row.directionName }}</td>
-              </ng-container>
-              <ng-container matColumnDef="serviceName">
-                <th mat-header-cell *matHeaderCellDef>Service</th>
-                <td mat-cell *matCellDef="let row">{{ row.serviceName }}</td>
-              </ng-container>
-              <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef>Actions</th>
-                <td mat-cell *matCellDef="let row">
-                  <button mat-icon-button color="primary" (click)="onEdit(row.id)"><mat-icon>edit</mat-icon></button>
-                  <button mat-icon-button color="warn" (click)="onDelete(row.id)"><mat-icon>delete</mat-icon></button>
-                </td>
-              </ng-container>
-
-              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-            </table>
-          </div>
-        </ng-container>
       </mat-card>
-    </div>
+    </ng-container>
+
+    <ng-template #tableView>
+      <div class="page-container">
+        <app-page-header icon="group" title="Agents" subtitle="Gestion des agents JIRAMA"></app-page-header>
+
+        <mat-card class="toolbar-card">
+          <mat-toolbar>
+            <div class="search">
+              <mat-form-field appearance="outline">
+                <input matInput placeholder="Rechercher" [formControl]="searchControl" (keyup.enter)="onSearch()" />
+              </mat-form-field>
+              <button mat-flat-button color="primary" (click)="onSearch()"><mat-icon>search</mat-icon> Rechercher</button>
+            </div>
+            <span class="spacer"></span>
+            <button mat-flat-button color="primary" (click)="onCreate()"><mat-icon>add</mat-icon> Nouvel agent</button>
+          </mat-toolbar>
+        </mat-card>
+
+        <mat-card class="content-card">
+          <loading-spinner *ngIf="loading()"></loading-spinner>
+
+          <ng-container *ngIf="!loading()">
+            <empty-state *ngIf="data().length === 0" title="Aucune donnée" description="Aucun agent disponible pour le moment."></empty-state>
+
+            <div *ngIf="data().length > 0" class="table-wrapper">
+              <table mat-table [dataSource]="data()" class="mat-elevation-z2">
+                <ng-container matColumnDef="matricule">
+                  <th mat-header-cell *matHeaderCellDef>Matricule</th>
+                  <td mat-cell *matCellDef="let row">{{ row.matricule }}</td>
+                </ng-container>
+                <ng-container matColumnDef="firstName">
+                  <th mat-header-cell *matHeaderCellDef>Prénom</th>
+                  <td mat-cell *matCellDef="let row">{{ row.firstName }}</td>
+                </ng-container>
+                <ng-container matColumnDef="lastName">
+                  <th mat-header-cell *matHeaderCellDef>Nom</th>
+                  <td mat-cell *matCellDef="let row">{{ row.lastName }}</td>
+                </ng-container>
+                <ng-container matColumnDef="email">
+                  <th mat-header-cell *matHeaderCellDef>Email</th>
+                  <td mat-cell *matCellDef="let row">{{ row.email }}</td>
+                </ng-container>
+                <ng-container matColumnDef="directionName">
+                  <th mat-header-cell *matHeaderCellDef>Direction</th>
+                  <td mat-cell *matCellDef="let row">{{ row.directionName }}</td>
+                </ng-container>
+                <ng-container matColumnDef="serviceName">
+                  <th mat-header-cell *matHeaderCellDef>Service</th>
+                  <td mat-cell *matCellDef="let row">{{ row.serviceName }}</td>
+                </ng-container>
+                <ng-container matColumnDef="actions">
+                  <th mat-header-cell *matHeaderCellDef>Actions</th>
+                  <td mat-cell *matCellDef="let row">
+                    <button mat-icon-button color="primary" (click)="onEdit(row.id)"><mat-icon>edit</mat-icon></button>
+                    <button mat-icon-button color="warn" (click)="onDelete(row.id)"><mat-icon>delete</mat-icon></button>
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+              </table>
+            </div>
+          </ng-container>
+        </mat-card>
+      </div>
+    </ng-template>
   `,
   styles: [
     `.toolbar-card { margin-bottom: 16px; }

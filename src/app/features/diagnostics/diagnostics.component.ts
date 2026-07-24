@@ -12,7 +12,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent } from '@shared/components';
 import { DiagnosticService, ConsultationService } from '@core/services';
 import { AuthService } from '@core/services/auth.service';
-import { DiagnosticListItem, Consultation } from '@core/models';
+import { DiagnosticListItem } from '@core/models';
 
 @Component({
   selector: 'app-diagnostics',
@@ -42,7 +42,9 @@ import { DiagnosticListItem, Consultation } from '@core/models';
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Consultation</mat-label>
             <mat-select formControlName="consultationId">
-              <mat-option *ngFor="let c of consultations()" [value]="c.id">{{ consultationLabel(c) }}</mat-option>
+              <mat-option *ngFor="let c of consultations()" [value]="c.id">
+                {{ c.id.slice(0, 8) }} — {{ c.scheduledAt | slice:0:10 }}
+              </mat-option>
             </mat-select>
           </mat-form-field>
           <mat-form-field appearance="outline" class="full-width">
@@ -62,24 +64,23 @@ import { DiagnosticListItem, Consultation } from '@core/models';
             <table mat-table [dataSource]="data()" class="mat-elevation-z2">
               <ng-container matColumnDef="id">
                 <th mat-header-cell *matHeaderCellDef>ID</th>
-                <td mat-cell *matCellDef="let row">{{ row.id }}</td>
+                <td mat-cell *matCellDef="let row">{{ row.id.slice(0, 8) }}</td>
               </ng-container>
               <ng-container matColumnDef="consultationRef">
                 <th mat-header-cell *matHeaderCellDef>Consultation</th>
                 <td mat-cell *matCellDef="let row">{{ row.consultationRef }}</td>
               </ng-container>
               <ng-container matColumnDef="result">
-                <th mat-header-cell *matHeaderCellDef>Résultat</th>
+                <th mat-header-cell *matHeaderCellDef>Description</th>
                 <td mat-cell *matCellDef="let row">{{ row.result }}</td>
               </ng-container>
               <ng-container matColumnDef="date">
                 <th mat-header-cell *matHeaderCellDef>Date</th>
-                <td mat-cell *matCellDef="let row">{{ row.date }}</td>
+                <td mat-cell *matCellDef="let row">{{ row.date | slice:0:10 }}</td>
               </ng-container>
               <ng-container matColumnDef="actions">
                 <th mat-header-cell *matHeaderCellDef>Actions</th>
                 <td mat-cell *matCellDef="let row">
-                  <button mat-icon-button color="primary" (click)="onView(row.id)"><mat-icon>visibility</mat-icon></button>
                   @if (auth.isAdmin() || auth.isMedecin()) {
                     <button mat-icon-button color="primary" (click)="onEdit(row.id)"><mat-icon>edit</mat-icon></button>
                   }
@@ -106,19 +107,20 @@ export class DiagnosticsComponent implements OnInit {
 
   readonly loading = signal(false);
   readonly data = signal<DiagnosticListItem[]>([]);
+  readonly consultations = signal<{ id: string; scheduledAt: string }[]>([]);
   readonly showForm = signal(false);
   readonly editingId = signal<string | null>(null);
-  readonly consultations = signal<Consultation[]>([]);
   readonly displayedColumns = ['id', 'consultationRef', 'result', 'date', 'actions'];
   readonly searchControl = new FormControl('');
 
   readonly form = new FormGroup({
-    consultationId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    consultationId: new FormControl<string | null>(null, { validators: [Validators.required] }),
     description: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
   });
 
   ngOnInit(): void {
     this.loadDiagnostics();
+    this.loadLookups();
   }
 
   onSearch(): void {
@@ -127,14 +129,12 @@ export class DiagnosticsComponent implements OnInit {
 
   onCreate(): void {
     this.editingId.set(null);
-    this.form.reset({ consultationId: '', description: '' });
-    this.loadFormOptions();
+    this.form.reset({ consultationId: null, description: '' });
     this.showForm.set(true);
   }
 
   onEdit(id: string): void {
     this.loading.set(true);
-    this.loadFormOptions();
     this.service.getById(id).subscribe({
       next: (diagnostic) => {
         this.editingId.set(id);
@@ -149,18 +149,8 @@ export class DiagnosticsComponent implements OnInit {
     });
   }
 
-  onView(id: string): void {
-    this.loading.set(true);
-    this.service.getById(id).subscribe({
-      next: () => this.loading.set(false),
-      error: () => this.loading.set(false),
-    });
-  }
-
   onDelete(id: string): void {
-    if (!confirm('Supprimer ce diagnostic ?')) {
-      return;
-    }
+    if (!confirm('Supprimer ce diagnostic ?')) return;
     this.loading.set(true);
     this.service.delete(id).subscribe({
       next: () => this.loadDiagnostics(this.searchControl.value?.trim() ?? ''),
@@ -175,15 +165,11 @@ export class DiagnosticsComponent implements OnInit {
     }
 
     this.loading.set(true);
-    const raw = this.form.getRawValue();
-    const payload: any = {
-      consultationId: raw.consultationId,
-      description: raw.description,
-    };
+    const payload = this.form.getRawValue();
 
     const request = this.editingId()
-      ? this.service.update(this.editingId()!, payload)
-      : this.service.create(payload);
+      ? this.service.update(this.editingId()!, payload as any)
+      : this.service.create(payload as any);
 
     request.subscribe({
       next: () => {
@@ -197,21 +183,12 @@ export class DiagnosticsComponent implements OnInit {
   cancelEdit(): void {
     this.showForm.set(false);
     this.editingId.set(null);
-    this.form.reset({ consultationId: '', description: '' });
+    this.form.reset({ consultationId: null, description: '' });
   }
 
-  consultationLabel(consultation: Consultation): string {
-    const date = consultation.scheduledAt ? new Date(consultation.scheduledAt).toLocaleDateString('fr-FR') : '—';
-    const patient = consultation.declaration?.agent
-      ? `${consultation.declaration.agent.firstName} ${consultation.declaration.agent.lastName}`
-      : '—';
-    const doctor = consultation.doctor ? ` (Dr ${consultation.doctor.lastName})` : '';
-    return `${date} — ${patient}${doctor}`;
-  }
-
-  private loadFormOptions(): void {
+  private loadLookups(): void {
     this.consultationService.getAll({ page: 1, pageSize: 100 }).subscribe({
-      next: (response) => this.consultations.set(response.items),
+      next: (response) => this.consultations.set(response.items as any),
     });
   }
 
@@ -223,17 +200,15 @@ export class DiagnosticsComponent implements OnInit {
 
     request.subscribe({
       next: (response) => {
-        this.data.set(response.items.map((diagnostic) => ({
-          id: diagnostic.id,
-          consultationRef: diagnostic.consultationId.slice(0, 8),
-          result: diagnostic.description,
-          date: diagnostic.createdAt,
+        this.data.set(response.items.map((d) => ({
+          id: d.id,
+          consultationRef: d.consultationId.slice(0, 8),
+          result: d.description,
+          date: d.createdAt,
         })));
         this.loading.set(false);
       },
-      error: () => {
-        this.loading.set(false);
-      },
+      error: () => this.loading.set(false),
     });
   }
 }

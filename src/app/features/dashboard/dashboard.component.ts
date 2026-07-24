@@ -87,9 +87,13 @@ export class DashboardComponent implements OnInit {
     clos: 'Clos', annule: 'Annulé',
   };
 
+  /* Palette alignée sur la charte JIRAMA Santé */
   readonly statusColors: Record<string, string> = {
-    nouveau: '#00897b', en_cours: '#1e88e5', traite: '#4caf50',
-    clos: '#78909c', annule: '#f44336',
+    nouveau: '#00796b',   // Vert principal
+    en_cours: '#e65100',  // Orange JIRAMA
+    traite: '#10b981',    // Vert succès
+    clos: '#6b7280',      // Muted / Neutre
+    annule: '#ef4444',    // Rouge erreur
   };
 
   ngOnInit(): void {
@@ -119,7 +123,7 @@ export class DashboardComponent implements OnInit {
   }
 
   getStatusLabel(status: string): string { return this.statusLabels[status] ?? status; }
-  getStatusColor(status: string): string { return this.statusColors[status] ?? '#b0bec5'; }
+  getStatusColor(status: string): string { return this.statusColors[status] ?? '#9ca3af'; }
 
   refresh(): void { this.loadDashboardData(); }
 }

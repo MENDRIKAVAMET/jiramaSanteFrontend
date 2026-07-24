@@ -10,7 +10,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
 
 import { PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent } from '@shared/components';
-import { ConsultationService, DeclarationService, UserService } from '@core/services';
+import { ConsultationService, DeclarationService, DoctorService } from '@core/services';
 import { AuthService } from '@core/services/auth.service';
 import { ConsultationListItem, Declaration, Doctor } from '@core/models';
 
@@ -125,7 +125,7 @@ import { ConsultationListItem, Declaration, Doctor } from '@core/models';
 export class ConsultationsComponent implements OnInit {
   private readonly service = inject(ConsultationService);
   private readonly declarationService = inject(DeclarationService);
-  private readonly userService = inject(UserService);
+  private readonly doctorService = inject(DoctorService);
   readonly auth = inject(AuthService);
 
   readonly loading = signal(false);
@@ -189,9 +189,7 @@ export class ConsultationsComponent implements OnInit {
   }
 
   onDelete(id: string): void {
-    if (!confirm('Supprimer cette consultation ?')) {
-      return;
-    }
+    if (!confirm('Supprimer cette consultation ?')) return;
     this.loading.set(true);
     this.service.delete(id).subscribe({
       next: () => this.loadConsultations(this.searchControl.value?.trim() ?? ''),
@@ -208,7 +206,6 @@ export class ConsultationsComponent implements OnInit {
     this.loading.set(true);
     const raw = this.form.getRawValue();
 
-    // declarationId n'est modifiable qu'à la création (absent du DTO update)
     const payload: any = this.editingId()
       ? {
           doctorId: raw.doctorId || undefined,
@@ -250,7 +247,6 @@ export class ConsultationsComponent implements OnInit {
   }
 
   private toDateTimeLocal(value: string): string {
-    // Convertit une date ISO en format attendu par <input type="datetime-local">
     const date = new Date(value);
     const pad = (n: number) => n.toString().padStart(2, '0');
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
@@ -260,8 +256,8 @@ export class ConsultationsComponent implements OnInit {
     this.declarationService.getAll({ page: 1, pageSize: 100 }).subscribe({
       next: (response: any) => this.declarations.set(response.items),
     });
-    this.userService.getDoctors().subscribe({
-      next: (doctors: Doctor[]) => this.doctors.set(doctors),
+    this.doctorService.getAll({ page: 1, pageSize: 100 }).subscribe({
+      next: (response) => this.doctors.set(response.items),
     });
   }
 

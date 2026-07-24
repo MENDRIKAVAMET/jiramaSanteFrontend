@@ -12,7 +12,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent } from '@shared/components';
 import { PrescriptionService, ConsultationService } from '@core/services';
 import { AuthService } from '@core/services/auth.service';
-import { PrescriptionListItem, Consultation, PrescriptionStatus, PRESCRIPTION_STATUS_LABELS } from '@core/models';
+import { PrescriptionListItem, PrescriptionStatus, PRESCRIPTION_STATUS_LABELS } from '@core/models';
 
 @Component({
   selector: 'app-prescriptions',
@@ -42,7 +42,9 @@ import { PrescriptionListItem, Consultation, PrescriptionStatus, PRESCRIPTION_ST
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Consultation</mat-label>
             <mat-select formControlName="consultationId">
-              <mat-option *ngFor="let c of consultations()" [value]="c.id">{{ consultationLabel(c) }}</mat-option>
+              <mat-option *ngFor="let c of consultations()" [value]="c.id">
+                {{ c.id.slice(0, 8) }} — {{ c.scheduledAt | slice:0:10 }}
+              </mat-option>
             </mat-select>
           </mat-form-field>
           <mat-form-field appearance="outline">
@@ -60,12 +62,12 @@ import { PrescriptionListItem, Consultation, PrescriptionStatus, PRESCRIPTION_ST
           <mat-form-field appearance="outline">
             <mat-label>Statut</mat-label>
             <mat-select formControlName="status">
-              <mat-option *ngFor="let s of prescriptionStatuses" [value]="s.value">{{ s.label }}</mat-option>
+              <mat-option *ngFor="let s of statuses" [value]="s">{{ statusLabels[s] }}</mat-option>
             </mat-select>
           </mat-form-field>
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Instructions</mat-label>
-            <textarea matInput rows="4" formControlName="instructions"></textarea>
+            <textarea matInput rows="3" formControlName="instructions"></textarea>
           </mat-form-field>
           <div class="form-actions">
             <button mat-stroked-button type="button" (click)="cancelEdit()">Annuler</button>
@@ -88,11 +90,11 @@ import { PrescriptionListItem, Consultation, PrescriptionStatus, PRESCRIPTION_ST
               </ng-container>
               <ng-container matColumnDef="status">
                 <th mat-header-cell *matHeaderCellDef>Statut</th>
-                <td mat-cell *matCellDef="let row">{{ statusLabel(row.status) }}</td>
+                <td mat-cell *matCellDef="let row">{{ statusLabels[$any(row.status)] }}</td>
               </ng-container>
               <ng-container matColumnDef="issuedAt">
                 <th mat-header-cell *matHeaderCellDef>Date</th>
-                <td mat-cell *matCellDef="let row">{{ row.issuedAt }}</td>
+                <td mat-cell *matCellDef="let row">{{ row.issuedAt | slice:0:10 }}</td>
               </ng-container>
               <ng-container matColumnDef="actions">
                 <th mat-header-cell *matHeaderCellDef>Actions</th>
@@ -124,24 +126,27 @@ export class PrescriptionsComponent implements OnInit {
 
   readonly loading = signal(false);
   readonly data = signal<PrescriptionListItem[]>([]);
+  readonly consultations = signal<{ id: string; scheduledAt: string }[]>([]);
   readonly showForm = signal(false);
   readonly editingId = signal<string | null>(null);
-  readonly consultations = signal<Consultation[]>([]);
   readonly displayedColumns = ['reference', 'patient', 'status', 'issuedAt', 'actions'];
   readonly searchControl = new FormControl('');
-  readonly prescriptionStatuses = Object.entries(PRESCRIPTION_STATUS_LABELS).map(([value, label]) => ({ value, label }));
+
+  readonly statuses: PrescriptionStatus[] = ['active', 'terminee', 'annulee'];
+  readonly statusLabels: Record<string, string> = PRESCRIPTION_STATUS_LABELS;
 
   readonly form = new FormGroup({
-    consultationId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    consultationId: new FormControl<string | null>(null, { validators: [Validators.required] }),
     medication: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     dosage: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     duration: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    instructions: new FormControl('', { nonNullable: true }),
-    status: new FormControl<PrescriptionStatus>('active', { nonNullable: true, validators: [Validators.required] }),
+    status: new FormControl<PrescriptionStatus>('active', { nonNullable: true }),
+    instructions: new FormControl(''),
   });
 
   ngOnInit(): void {
     this.loadPrescriptions();
+    this.loadLookups();
   }
 
   onSearch(): void {
@@ -150,14 +155,12 @@ export class PrescriptionsComponent implements OnInit {
 
   onCreate(): void {
     this.editingId.set(null);
-    this.form.reset({ consultationId: '', medication: '', dosage: '', duration: '', instructions: '', status: 'active' });
-    this.loadFormOptions();
+    this.form.reset({ consultationId: null, medication: '', dosage: '', duration: '', status: 'active', instructions: '' });
     this.showForm.set(true);
   }
 
   onEdit(id: string): void {
     this.loading.set(true);
-    this.loadFormOptions();
     this.service.getById(id).subscribe({
       next: (prescription) => {
         this.editingId.set(id);
@@ -166,8 +169,8 @@ export class PrescriptionsComponent implements OnInit {
           medication: prescription.medication,
           dosage: prescription.dosage,
           duration: prescription.duration,
-          instructions: prescription.instructions ?? '',
           status: prescription.status,
+          instructions: prescription.instructions ?? '',
         });
         this.showForm.set(true);
         this.loading.set(false);
@@ -185,9 +188,7 @@ export class PrescriptionsComponent implements OnInit {
   }
 
   onDelete(id: string): void {
-    if (!confirm('Supprimer cette prescription ?')) {
-      return;
-    }
+    if (!confirm('Supprimer cette prescription ?')) return;
     this.loading.set(true);
     this.service.delete(id).subscribe({
       next: () => this.loadPrescriptions(this.searchControl.value?.trim() ?? ''),
@@ -202,19 +203,11 @@ export class PrescriptionsComponent implements OnInit {
     }
 
     this.loading.set(true);
-    const raw = this.form.getRawValue();
-    const payload: any = {
-      consultationId: raw.consultationId,
-      medication: raw.medication,
-      dosage: raw.dosage,
-      duration: raw.duration,
-      instructions: raw.instructions || null,
-      status: raw.status,
-    };
+    const payload = this.form.getRawValue();
 
     const request = this.editingId()
-      ? this.service.update(this.editingId()!, payload)
-      : this.service.create(payload);
+      ? this.service.update(this.editingId()!, payload as any)
+      : this.service.create(payload as any);
 
     request.subscribe({
       next: () => {
@@ -228,25 +221,12 @@ export class PrescriptionsComponent implements OnInit {
   cancelEdit(): void {
     this.showForm.set(false);
     this.editingId.set(null);
-    this.form.reset({ consultationId: '', medication: '', dosage: '', duration: '', instructions: '', status: 'active' });
+    this.form.reset({ consultationId: null, medication: '', dosage: '', duration: '', status: 'active', instructions: '' });
   }
 
-  statusLabel(status: PrescriptionStatus): string {
-    return PRESCRIPTION_STATUS_LABELS[status] ?? status;
-  }
-
-  consultationLabel(consultation: Consultation): string {
-    const date = consultation.scheduledAt ? new Date(consultation.scheduledAt).toLocaleDateString('fr-FR') : '—';
-    const patient = consultation.declaration?.agent
-      ? `${consultation.declaration.agent.firstName} ${consultation.declaration.agent.lastName}`
-      : '—';
-    const doctor = consultation.doctor ? ` (Dr ${consultation.doctor.lastName})` : '';
-    return `${date} — ${patient}${doctor}`;
-  }
-
-  private loadFormOptions(): void {
+  private loadLookups(): void {
     this.consultationService.getAll({ page: 1, pageSize: 100 }).subscribe({
-      next: (response) => this.consultations.set(response.items),
+      next: (response) => this.consultations.set(response.items as any),
     });
   }
 
@@ -258,20 +238,18 @@ export class PrescriptionsComponent implements OnInit {
 
     request.subscribe({
       next: (response) => {
-        this.data.set(response.items.map((prescription) => ({
-          id: prescription.id,
-          reference: prescription.id.slice(0, 8),
-          patientName: prescription.consultation?.declaration?.agent
-            ? `${prescription.consultation.declaration.agent.firstName} ${prescription.consultation.declaration.agent.lastName}`
+        this.data.set(response.items.map((p) => ({
+          id: p.id,
+          reference: p.id.slice(0, 8),
+          patientName: p.consultation?.declaration?.agent
+            ? `${p.consultation.declaration.agent.firstName} ${p.consultation.declaration.agent.lastName}`
             : '—',
-          issuedAt: prescription.createdAt,
-          status: prescription.status,
+          issuedAt: p.createdAt,
+          status: p.status,
         })));
         this.loading.set(false);
       },
-      error: () => {
-        this.loading.set(false);
-      },
+      error: () => this.loading.set(false),
     });
   }
 }

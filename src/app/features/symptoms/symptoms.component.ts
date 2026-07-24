@@ -17,24 +17,14 @@ import { Symptom } from '@core/models';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatIconModule, MatButtonModule, MatInputModule, MatTableModule, MatToolbarModule, PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent],
   template: `
-    <div class="page-container">
-      <app-page-header icon="bug_report" title="Symptômes" subtitle="Gestion des symptômes médicaux"></app-page-header>
-
-      <mat-card class="toolbar-card">
-        <mat-toolbar>
-          <div class="search">
-            <mat-form-field appearance="outline">
-              <input matInput placeholder="Rechercher" [formControl]="searchControl" (keyup.enter)="onSearch()" />
-            </mat-form-field>
-            <button mat-flat-button color="primary" (click)="onSearch()"><mat-icon>search</mat-icon> Rechercher</button>
-          </div>
-          <span class="spacer"></span>
-          <button mat-flat-button color="primary" (click)="onCreate()"><mat-icon>add</mat-icon> Nouveau symptôme</button>
-        </mat-toolbar>
-      </mat-card>
-
+    <ng-container *ngIf="showForm(); else tableView">
+      <app-page-header
+        icon="bug_report"
+        [title]="editingId() ? 'Modifier le symptôme' : 'Nouveau symptôme'"
+        subtitle="Gestion des symptômes médicaux">
+      </app-page-header>
       <mat-card class="content-card">
-        <form *ngIf="showForm()" [formGroup]="form" class="form-grid" (ngSubmit)="submitForm()">
+        <form [formGroup]="form" class="form-grid" (ngSubmit)="submitForm()">
           <mat-form-field appearance="outline">
             <mat-label>Code</mat-label>
             <input matInput formControlName="code" />
@@ -56,43 +46,64 @@ import { Symptom } from '@core/models';
             <button mat-flat-button color="primary" type="submit" [disabled]="loading()">Enregistrer</button>
           </div>
         </form>
-
-        <loading-spinner *ngIf="loading()"></loading-spinner>
-        <ng-container *ngIf="!loading()">
-          <empty-state *ngIf="data().length === 0" title="Aucune donnée" description="Aucun symptôme disponible pour le moment."></empty-state>
-          <div *ngIf="data().length > 0" class="table-wrapper">
-            <table mat-table [dataSource]="data()" class="mat-elevation-z2">
-              <ng-container matColumnDef="code">
-                <th mat-header-cell *matHeaderCellDef>Code</th>
-                <td mat-cell *matCellDef="let row">{{ row.code }}</td>
-              </ng-container>
-              <ng-container matColumnDef="name">
-                <th mat-header-cell *matHeaderCellDef>Nom</th>
-                <td mat-cell *matCellDef="let row">{{ row.name }}</td>
-              </ng-container>
-              <ng-container matColumnDef="category">
-                <th mat-header-cell *matHeaderCellDef>Catégorie</th>
-                <td mat-cell *matCellDef="let row">{{ row.category }}</td>
-              </ng-container>
-              <ng-container matColumnDef="severity">
-                <th mat-header-cell *matHeaderCellDef>Sévérité</th>
-                <td mat-cell *matCellDef="let row">{{ row.severity }}</td>
-              </ng-container>
-              <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef>Actions</th>
-                <td mat-cell *matCellDef="let row">
-                  <button mat-icon-button color="primary" (click)="onEdit(row.id)"><mat-icon>edit</mat-icon></button>
-                  <button mat-icon-button color="warn" (click)="onDelete(row.id)"><mat-icon>delete</mat-icon></button>
-                </td>
-              </ng-container>
-
-              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-            </table>
-          </div>
-        </ng-container>
       </mat-card>
-    </div>
+    </ng-container>
+
+    <ng-template #tableView>
+      <div class="page-container">
+        <app-page-header icon="bug_report" title="Symptômes" subtitle="Gestion des symptômes médicaux"></app-page-header>
+
+        <mat-card class="toolbar-card">
+          <mat-toolbar>
+            <div class="search">
+              <mat-form-field appearance="outline">
+                <input matInput placeholder="Rechercher" [formControl]="searchControl" (keyup.enter)="onSearch()" />
+              </mat-form-field>
+              <button mat-flat-button color="primary" (click)="onSearch()"><mat-icon>search</mat-icon> Rechercher</button>
+            </div>
+            <span class="spacer"></span>
+            <button mat-flat-button color="primary" (click)="onCreate()"><mat-icon>add</mat-icon> Nouveau symptôme</button>
+          </mat-toolbar>
+        </mat-card>
+
+        <mat-card class="content-card">
+          <loading-spinner *ngIf="loading()"></loading-spinner>
+          <ng-container *ngIf="!loading()">
+            <empty-state *ngIf="data().length === 0" title="Aucune donnée" description="Aucun symptôme disponible pour le moment."></empty-state>
+            <div *ngIf="data().length > 0" class="table-wrapper">
+              <table mat-table [dataSource]="data()" class="mat-elevation-z2">
+                <ng-container matColumnDef="code">
+                  <th mat-header-cell *matHeaderCellDef>Code</th>
+                  <td mat-cell *matCellDef="let row">{{ row.code }}</td>
+                </ng-container>
+                <ng-container matColumnDef="name">
+                  <th mat-header-cell *matHeaderCellDef>Nom</th>
+                  <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+                </ng-container>
+                <ng-container matColumnDef="category">
+                  <th mat-header-cell *matHeaderCellDef>Catégorie</th>
+                  <td mat-cell *matCellDef="let row">{{ row.category }}</td>
+                </ng-container>
+                <ng-container matColumnDef="severity">
+                  <th mat-header-cell *matHeaderCellDef>Sévérité</th>
+                  <td mat-cell *matCellDef="let row">{{ row.severity }}</td>
+                </ng-container>
+                <ng-container matColumnDef="actions">
+                  <th mat-header-cell *matHeaderCellDef>Actions</th>
+                  <td mat-cell *matCellDef="let row">
+                    <button mat-icon-button color="primary" (click)="onEdit(row.id)"><mat-icon>edit</mat-icon></button>
+                    <button mat-icon-button color="warn" (click)="onDelete(row.id)"><mat-icon>delete</mat-icon></button>
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+              </table>
+            </div>
+          </ng-container>
+        </mat-card>
+      </div>
+    </ng-template>
   `,
   styles: [`.toolbar-card { margin-bottom: 16px; } .search { display:flex; gap:8px; align-items:center; } .spacer { flex: 1 1 auto; } .content-card { padding: 16px; } .table-wrapper { overflow: auto; }`],
 })
