@@ -1,21 +1,23 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
 
 import { PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent } from '@shared/components';
-import { PrescriptionService } from '@core/services';
-import { PrescriptionListItem } from '@core/models';
+import { PrescriptionService, ConsultationService } from '@core/services';
+import { AuthService } from '@core/services/auth.service';
+import { PrescriptionListItem, Consultation, PrescriptionStatus, PRESCRIPTION_STATUS_LABELS } from '@core/models';
 
 @Component({
   selector: 'app-prescriptions',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatIconModule, MatButtonModule, MatInputModule, MatTableModule, MatToolbarModule, PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent],
+  imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatIconModule, MatButtonModule, MatInputModule, MatSelectModule, MatTableModule, MatToolbarModule, PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent],
   template: `
     <div class="page-container">
       <app-page-header icon="receipt_long" title="Prescriptions" subtitle="Gestion des prescriptions médicales"></app-page-header>
@@ -29,11 +31,48 @@ import { PrescriptionListItem } from '@core/models';
             <button mat-flat-button color="primary" (click)="onSearch()"><mat-icon>search</mat-icon> Rechercher</button>
           </div>
           <span class="spacer"></span>
-          <button mat-flat-button color="primary" (click)="onCreate()"><mat-icon>add</mat-icon> Nouvelle prescription</button>
+          @if (auth.isAdmin() || auth.isMedecin()) {
+            <button mat-flat-button color="primary" (click)="onCreate()"><mat-icon>add</mat-icon> Nouvelle prescription</button>
+          }
         </mat-toolbar>
       </mat-card>
 
       <mat-card class="content-card">
+        <form *ngIf="showForm()" [formGroup]="form" class="form-grid" (ngSubmit)="submitForm()">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Consultation</mat-label>
+            <mat-select formControlName="consultationId">
+              <mat-option *ngFor="let c of consultations()" [value]="c.id">{{ consultationLabel(c) }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Médicament</mat-label>
+            <input matInput formControlName="medication" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Dosage</mat-label>
+            <input matInput formControlName="dosage" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Durée</mat-label>
+            <input matInput formControlName="duration" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Statut</mat-label>
+            <mat-select formControlName="status">
+              <mat-option *ngFor="let s of prescriptionStatuses" [value]="s.value">{{ s.label }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Instructions</mat-label>
+            <textarea matInput rows="4" formControlName="instructions"></textarea>
+          </mat-form-field>
+          <div class="form-actions">
+            <button mat-stroked-button type="button" (click)="cancelEdit()">Annuler</button>
+            <button mat-flat-button color="primary" type="submit" [disabled]="loading()">Enregistrer</button>
+          </div>
+        </form>
+
         <loading-spinner *ngIf="loading()"></loading-spinner>
         <ng-container *ngIf="!loading()">
           <empty-state *ngIf="data().length === 0" title="Aucune donnée" description="Aucune prescription disponible pour le moment."></empty-state>
@@ -49,7 +88,7 @@ import { PrescriptionListItem } from '@core/models';
               </ng-container>
               <ng-container matColumnDef="status">
                 <th mat-header-cell *matHeaderCellDef>Statut</th>
-                <td mat-cell *matCellDef="let row">{{ row.status }}</td>
+                <td mat-cell *matCellDef="let row">{{ statusLabel(row.status) }}</td>
               </ng-container>
               <ng-container matColumnDef="issuedAt">
                 <th mat-header-cell *matHeaderCellDef>Date</th>
@@ -59,6 +98,12 @@ import { PrescriptionListItem } from '@core/models';
                 <th mat-header-cell *matHeaderCellDef>Actions</th>
                 <td mat-cell *matCellDef="let row">
                   <button mat-icon-button color="primary" (click)="onView(row.id)"><mat-icon>visibility</mat-icon></button>
+                  @if (auth.isAdmin() || auth.isMedecin()) {
+                    <button mat-icon-button color="primary" (click)="onEdit(row.id)"><mat-icon>edit</mat-icon></button>
+                  }
+                  @if (auth.isAdmin()) {
+                    <button mat-icon-button color="warn" (click)="onDelete(row.id)"><mat-icon>delete</mat-icon></button>
+                  }
                 </td>
               </ng-container>
 
@@ -70,14 +115,30 @@ import { PrescriptionListItem } from '@core/models';
       </mat-card>
     </div>
   `,
-  styles: [`.toolbar-card { margin-bottom: 16px; } .search { display:flex; gap:8px; align-items:center; } .spacer { flex: 1 1 auto; } .content-card { padding: 16px; } .table-wrapper { overflow: auto; }`],
+  styles: [`.toolbar-card { margin-bottom: 16px; } .search { display:flex; gap:8px; align-items:center; } .spacer { flex: 1 1 auto; } .content-card { padding: 16px; } .table-wrapper { overflow: auto; } .form-grid { display:grid; grid-template-columns: repeat(2, 1fr); gap: 8px 16px; margin-bottom: 16px; } .full-width { grid-column: 1 / -1; } .form-actions { grid-column: 1 / -1; display:flex; justify-content:flex-end; gap: 8px; }`],
 })
 export class PrescriptionsComponent implements OnInit {
   private readonly service = inject(PrescriptionService);
+  private readonly consultationService = inject(ConsultationService);
+  readonly auth = inject(AuthService);
+
   readonly loading = signal(false);
   readonly data = signal<PrescriptionListItem[]>([]);
+  readonly showForm = signal(false);
+  readonly editingId = signal<string | null>(null);
+  readonly consultations = signal<Consultation[]>([]);
   readonly displayedColumns = ['reference', 'patient', 'status', 'issuedAt', 'actions'];
   readonly searchControl = new FormControl('');
+  readonly prescriptionStatuses = Object.entries(PRESCRIPTION_STATUS_LABELS).map(([value, label]) => ({ value, label }));
+
+  readonly form = new FormGroup({
+    consultationId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    medication: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    dosage: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    duration: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    instructions: new FormControl('', { nonNullable: true }),
+    status: new FormControl<PrescriptionStatus>('active', { nonNullable: true, validators: [Validators.required] }),
+  });
 
   ngOnInit(): void {
     this.loadPrescriptions();
@@ -88,7 +149,31 @@ export class PrescriptionsComponent implements OnInit {
   }
 
   onCreate(): void {
-    console.warn('Create prescription workflow is not implemented yet.');
+    this.editingId.set(null);
+    this.form.reset({ consultationId: '', medication: '', dosage: '', duration: '', instructions: '', status: 'active' });
+    this.loadFormOptions();
+    this.showForm.set(true);
+  }
+
+  onEdit(id: string): void {
+    this.loading.set(true);
+    this.loadFormOptions();
+    this.service.getById(id).subscribe({
+      next: (prescription) => {
+        this.editingId.set(id);
+        this.form.reset({
+          consultationId: prescription.consultationId,
+          medication: prescription.medication,
+          dosage: prescription.dosage,
+          duration: prescription.duration,
+          instructions: prescription.instructions ?? '',
+          status: prescription.status,
+        });
+        this.showForm.set(true);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
   }
 
   onView(id: string): void {
@@ -96,6 +181,72 @@ export class PrescriptionsComponent implements OnInit {
     this.service.getById(id).subscribe({
       next: () => this.loading.set(false),
       error: () => this.loading.set(false),
+    });
+  }
+
+  onDelete(id: string): void {
+    if (!confirm('Supprimer cette prescription ?')) {
+      return;
+    }
+    this.loading.set(true);
+    this.service.delete(id).subscribe({
+      next: () => this.loadPrescriptions(this.searchControl.value?.trim() ?? ''),
+      error: () => this.loading.set(false),
+    });
+  }
+
+  submitForm(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    this.loading.set(true);
+    const raw = this.form.getRawValue();
+    const payload: any = {
+      consultationId: raw.consultationId,
+      medication: raw.medication,
+      dosage: raw.dosage,
+      duration: raw.duration,
+      instructions: raw.instructions || null,
+      status: raw.status,
+    };
+
+    const request = this.editingId()
+      ? this.service.update(this.editingId()!, payload)
+      : this.service.create(payload);
+
+    request.subscribe({
+      next: () => {
+        this.cancelEdit();
+        this.loadPrescriptions(this.searchControl.value?.trim() ?? '');
+      },
+      error: () => this.loading.set(false),
+    });
+  }
+
+  cancelEdit(): void {
+    this.showForm.set(false);
+    this.editingId.set(null);
+    this.form.reset({ consultationId: '', medication: '', dosage: '', duration: '', instructions: '', status: 'active' });
+  }
+
+  statusLabel(status: PrescriptionStatus): string {
+    return PRESCRIPTION_STATUS_LABELS[status] ?? status;
+  }
+
+  consultationLabel(consultation: Consultation): string {
+    const date = consultation.scheduledAt ? new Date(consultation.scheduledAt).toLocaleDateString('fr-FR') : '—';
+    const patient = consultation.declaration?.agent
+      ? `${consultation.declaration.agent.firstName} ${consultation.declaration.agent.lastName}`
+      : '—';
+    const doctor = consultation.doctor ? ` (Dr ${consultation.doctor.lastName})` : '';
+    return `${date} — ${patient}${doctor}`;
+  }
+
+  private loadFormOptions(): void {
+    this.consultationService.getAll({ page: 1, pageSize: 100 }).subscribe({
+      next: (response) => this.consultations.set(response.items),
     });
   }
 
