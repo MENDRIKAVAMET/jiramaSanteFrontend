@@ -55,7 +55,4 @@ export class DeclarationService {
   updateStatus(id: string, status: string): Observable<Declaration> {
     return this.http.patch<Declaration>(`${this.baseUrl}/${id}/status`, { status });
   }
-  delete(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${id}`);
-  }
 }

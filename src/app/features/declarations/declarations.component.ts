@@ -1,7 +1,6 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -81,7 +80,6 @@ import { DeclarationListItem } from '@core/models';
 })
 export class DeclarationsComponent implements OnInit {
   private readonly service = inject(DeclarationService);
-  private readonly route = inject(ActivatedRoute);
   readonly auth = inject(AuthService);
   readonly loading = signal(false);
   readonly data = signal<DeclarationListItem[]>([]);
@@ -95,12 +93,7 @@ export class DeclarationsComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    // Permet à la recherche globale (barre du layout) d'arriver directement avec une requête pré-remplie.
-    const initialQuery = this.route.snapshot.queryParamMap.get('q') ?? '';
-    if (initialQuery) {
-      this.searchControl.setValue(initialQuery);
-    }
-    this.loadDeclarations(initialQuery);
+    this.loadDeclarations();
   }
 
   onSearch(): void {
@@ -160,14 +153,7 @@ export class DeclarationsComponent implements OnInit {
 
     request.subscribe({
       next: (items) => {
-        let rows = (items as any[]).map(this.mapRow);
-        if (query) {
-          const q = query.toLowerCase();
-          rows = rows.filter((r) =>
-            r.reference.toLowerCase().includes(q) || r.agentName.toLowerCase().includes(q),
-          );
-        }
-        this.data.set(rows);
+        this.data.set((items as any[]).map(this.mapRow));
         this.loading.set(false);
       },
       error: () => this.loading.set(false),

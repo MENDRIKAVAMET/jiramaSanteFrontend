@@ -19,114 +19,103 @@ import { CertificateListItem, DeclarationListItem, Doctor, CertificateType, CERT
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatIconModule, MatButtonModule, MatInputModule, MatSelectModule, MatTableModule, MatToolbarModule, PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent],
   template: `
-    <ng-container *ngIf="showForm(); else tableView">
-  <app-page-header
-    icon="verified"
-    [title]="editingId() ? 'Modifier le certificat' : 'Nouveau certificat'"
-    subtitle="Arrêts maladie, aptitudes, évacuations">
-  </app-page-header>
-  <mat-card class="content-card">
-    <form [formGroup]="form" class="form-grid" (ngSubmit)="submitForm()">
-      <mat-form-field appearance="outline">
-        <mat-label>Déclaration</mat-label>
-        <mat-select formControlName="declarationId">
-          <mat-option *ngFor="let d of declarations()" [value]="d.id">{{ d.reference }} — {{ d.agentName }}</mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Médecin</mat-label>
-        <mat-select formControlName="doctorId">
-          <mat-option *ngFor="let doc of doctors()" [value]="doc.id">Dr {{ doc.firstName }} {{ doc.lastName }}</mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Type</mat-label>
-        <mat-select formControlName="type">
-          <mat-option *ngFor="let t of certificateTypes" [value]="t.value">{{ t.label }}</mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Valide du</mat-label>
-        <input matInput type="date" formControlName="validFrom" />
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Valide au</mat-label>
-        <input matInput type="date" formControlName="validTo" />
-      </mat-form-field>
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Contenu</mat-label>
-        <textarea matInput rows="4" formControlName="content"></textarea>
-      </mat-form-field>
-      <div class="form-actions">
-        <button mat-stroked-button type="button" (click)="cancelEdit()">Annuler</button>
-        <button mat-flat-button color="primary" type="submit" [disabled]="loading()">Enregistrer</button>
-      </div>
-    </form>
-  </mat-card>
-</ng-container>
+    <div class="page-container">
+      <app-page-header icon="verified" title="Certificats médicaux" subtitle="Arrêts maladie, aptitudes, évacuations"></app-page-header>
 
-<ng-template #tableView>
-  <div class="page-container">
-    <app-page-header icon="verified" title="Certificats médicaux" subtitle="Arrêts maladie, aptitudes, évacuations"></app-page-header>
+      <mat-card class="toolbar-card">
+        <mat-toolbar>
+          <div class="search">
+            <mat-form-field appearance="outline">
+              <input matInput placeholder="Rechercher" [formControl]="searchControl" (keyup.enter)="onSearch()" />
+            </mat-form-field>
+            <button mat-flat-button color="primary" (click)="onSearch()"><mat-icon>search</mat-icon> Rechercher</button>
+          </div>
+          <span class="spacer"></span>
+          @if (auth.isAdmin() || auth.isMedecin()) {
+            <button mat-flat-button color="primary" (click)="onCreate()"><mat-icon>add</mat-icon> Nouveau certificat</button>
+          }
+        </mat-toolbar>
+      </mat-card>
 
-    <mat-card class="toolbar-card">
-      <mat-toolbar>
-        <div class="search">
+      <mat-card class="content-card">
+        <form *ngIf="showForm()" [formGroup]="form" class="form-grid" (ngSubmit)="submitForm()">
           <mat-form-field appearance="outline">
-            <input matInput placeholder="Rechercher" [formControl]="searchControl" (keyup.enter)="onSearch()" />
+            <mat-label>Déclaration</mat-label>
+            <mat-select formControlName="declarationId">
+              <mat-option *ngFor="let d of declarations()" [value]="d.id">{{ d.reference }} — {{ d.agentName }}</mat-option>
+            </mat-select>
           </mat-form-field>
-          <button mat-flat-button color="primary" (click)="onSearch()"><mat-icon>search</mat-icon> Rechercher</button>
-        </div>
-        <span class="spacer"></span>
-        @if (auth.isAdmin() || auth.isMedecin()) {
-          <button mat-flat-button color="primary" (click)="onCreate()"><mat-icon>add</mat-icon> Nouveau certificat</button>
-        }
-      </mat-toolbar>
-    </mat-card>
+          <mat-form-field appearance="outline">
+            <mat-label>Médecin</mat-label>
+            <mat-select formControlName="doctorId">
+              <mat-option *ngFor="let doc of doctors()" [value]="doc.id">Dr {{ doc.firstName }} {{ doc.lastName }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Type</mat-label>
+            <mat-select formControlName="type">
+              <mat-option *ngFor="let t of certificateTypes" [value]="t.value">{{ t.label }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Valide du</mat-label>
+            <input matInput type="date" formControlName="validFrom" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Valide au</mat-label>
+            <input matInput type="date" formControlName="validTo" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Contenu</mat-label>
+            <textarea matInput rows="4" formControlName="content"></textarea>
+          </mat-form-field>
+          <div class="form-actions">
+            <button mat-stroked-button type="button" (click)="cancelEdit()">Annuler</button>
+            <button mat-flat-button color="primary" type="submit" [disabled]="loading()">Enregistrer</button>
+          </div>
+        </form>
 
-    <mat-card class="content-card">
-      <loading-spinner *ngIf="loading()"></loading-spinner>
-      <ng-container *ngIf="!loading()">
-        <empty-state *ngIf="data().length === 0" title="Aucune donnée" description="Aucun certificat disponible pour le moment."></empty-state>
-        <div *ngIf="data().length > 0" class="table-wrapper">
-          <table mat-table [dataSource]="data()" class="mat-elevation-z2">
-            <ng-container matColumnDef="reference">
-              <th mat-header-cell *matHeaderCellDef>Référence</th>
-              <td mat-cell *matCellDef="let row">{{ row.reference }}</td>
-            </ng-container>
-            <ng-container matColumnDef="type">
-              <th mat-header-cell *matHeaderCellDef>Type</th>
-              <td mat-cell *matCellDef="let row">{{ typeLabel(row.type) }}</td>
-            </ng-container>
-            <ng-container matColumnDef="issuedTo">
-              <th mat-header-cell *matHeaderCellDef>Dossier</th>
-              <td mat-cell *matCellDef="let row">{{ row.issuedTo }}</td>
-            </ng-container>
-            <ng-container matColumnDef="date">
-              <th mat-header-cell *matHeaderCellDef>Date</th>
-              <td mat-cell *matCellDef="let row">{{ row.date }}</td>
-            </ng-container>
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef>Actions</th>
-              <td mat-cell *matCellDef="let row">
-                <button mat-icon-button color="primary" (click)="onView(row.id)"><mat-icon>visibility</mat-icon></button>
-                @if (auth.isAdmin() || auth.isMedecin()) {
-                  <button mat-icon-button color="primary" (click)="onEdit(row.id)"><mat-icon>edit</mat-icon></button>
-                }
-                @if (auth.isAdmin()) {
-                  <button mat-icon-button color="warn" (click)="onDelete(row.id)"><mat-icon>delete</mat-icon></button>
-                }
-              </td>
-            </ng-container>
+        <loading-spinner *ngIf="loading()"></loading-spinner>
+        <ng-container *ngIf="!loading()">
+          <empty-state *ngIf="data().length === 0" title="Aucune donnée" description="Aucun certificat disponible pour le moment."></empty-state>
+          <div *ngIf="data().length > 0" class="table-wrapper">
+            <table mat-table [dataSource]="data()" class="mat-elevation-z2">
+              <ng-container matColumnDef="reference">
+                <th mat-header-cell *matHeaderCellDef>Référence</th>
+                <td mat-cell *matCellDef="let row">{{ row.reference }}</td>
+              </ng-container>
+              <ng-container matColumnDef="type">
+                <th mat-header-cell *matHeaderCellDef>Type</th>
+                <td mat-cell *matCellDef="let row">{{ typeLabel(row.type) }}</td>
+              </ng-container>
+              <ng-container matColumnDef="issuedTo">
+                <th mat-header-cell *matHeaderCellDef>Dossier</th>
+                <td mat-cell *matCellDef="let row">{{ row.issuedTo }}</td>
+              </ng-container>
+              <ng-container matColumnDef="date">
+                <th mat-header-cell *matHeaderCellDef>Date</th>
+                <td mat-cell *matCellDef="let row">{{ row.date }}</td>
+              </ng-container>
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let row">
+                  <button mat-icon-button color="primary" (click)="onView(row.id)"><mat-icon>visibility</mat-icon></button>
+                  @if (auth.isAdmin() || auth.isMedecin()) {
+                    <button mat-icon-button color="primary" (click)="onEdit(row.id)"><mat-icon>edit</mat-icon></button>
+                  }
+                  @if (auth.isAdmin()) {
+                    <button mat-icon-button color="warn" (click)="onDelete(row.id)"><mat-icon>delete</mat-icon></button>
+                  }
+                </td>
+              </ng-container>
 
-            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-          </table>
-        </div>
-      </ng-container>
-    </mat-card>
-  </div>
-</ng-template>
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+          </div>
+        </ng-container>
+      </mat-card>
+    </div>
   `,
   styles: [`.toolbar-card { margin-bottom: 16px; } .search { display:flex; gap:8px; align-items:center; } .spacer { flex: 1 1 auto; } .content-card { padding: 16px; } .table-wrapper { overflow: auto; } .form-grid { display:grid; grid-template-columns: repeat(2, 1fr); gap: 8px 16px; margin-bottom: 16px; } .full-width { grid-column: 1 / -1; } .form-actions { grid-column: 1 / -1; display:flex; justify-content:flex-end; gap: 8px; }`],
 })

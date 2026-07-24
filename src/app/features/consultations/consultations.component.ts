@@ -1,23 +1,21 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
 
 import { PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent } from '@shared/components';
-import { ConsultationService, DeclarationService, DoctorService } from '@core/services';
-import { AuthService } from '@core/services/auth.service';
-import { ConsultationListItem, Declaration, Doctor } from '@core/models';
+import { ConsultationService } from '@core/services';
+import { ConsultationListItem } from '@core/models';
 
 @Component({
   selector: 'app-consultations',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatIconModule, MatButtonModule, MatInputModule, MatSelectModule, MatTableModule, MatToolbarModule, PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent],
+  imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatIconModule, MatButtonModule, MatInputModule, MatTableModule, MatToolbarModule, PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent],
   template: `
     <div class="page-container">
       <app-page-header icon="medical_services" title="Consultations" subtitle="Historique des consultations et suivis"></app-page-header>
@@ -31,49 +29,11 @@ import { ConsultationListItem, Declaration, Doctor } from '@core/models';
             <button mat-flat-button color="primary" (click)="onSearch()"><mat-icon>search</mat-icon> Rechercher</button>
           </div>
           <span class="spacer"></span>
-          @if (auth.isAdmin() || auth.isMedecin()) {
-            <button mat-flat-button color="primary" (click)="onCreate()"><mat-icon>add</mat-icon> Nouvelle consultation</button>
-          }
+          <button mat-flat-button color="primary" (click)="onCreate()"><mat-icon>add</mat-icon> Nouvelle consultation</button>
         </mat-toolbar>
       </mat-card>
 
       <mat-card class="content-card">
-        <form *ngIf="showForm()" [formGroup]="form" class="form-grid" (ngSubmit)="submitForm()">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Déclaration</mat-label>
-            <mat-select formControlName="declarationId">
-              <mat-option *ngFor="let d of declarations()" [value]="d.id">{{ declarationLabel(d) }}</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Médecin</mat-label>
-            <mat-select formControlName="doctorId">
-              <mat-option [value]="null">—</mat-option>
-              <mat-option *ngFor="let doc of doctors()" [value]="doc.id">Dr {{ doc.firstName }} {{ doc.lastName }}</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Date planifiée</mat-label>
-            <input matInput type="datetime-local" formControlName="scheduledAt" />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Statut</mat-label>
-            <mat-select formControlName="status">
-              <mat-option value="planifiee">Planifiée</mat-option>
-              <mat-option value="terminee">Terminée</mat-option>
-              <mat-option value="annulee">Annulée</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Notes</mat-label>
-            <textarea matInput rows="4" formControlName="notes"></textarea>
-          </mat-form-field>
-          <div class="form-actions">
-            <button mat-stroked-button type="button" (click)="cancelEdit()">Annuler</button>
-            <button mat-flat-button color="primary" type="submit" [disabled]="loading()">Enregistrer</button>
-          </div>
-        </form>
-
         <loading-spinner *ngIf="loading()"></loading-spinner>
         <ng-container *ngIf="!loading()">
           <empty-state *ngIf="data().length === 0" title="Aucune donnée" description="Aucune consultation disponible pour le moment."></empty-state>
@@ -103,12 +63,6 @@ import { ConsultationListItem, Declaration, Doctor } from '@core/models';
                 <th mat-header-cell *matHeaderCellDef>Actions</th>
                 <td mat-cell *matCellDef="let row">
                   <button mat-icon-button color="primary" (click)="onView(row.id)"><mat-icon>visibility</mat-icon></button>
-                  @if (auth.isAdmin() || auth.isMedecin()) {
-                    <button mat-icon-button color="primary" (click)="onEdit(row.id)"><mat-icon>edit</mat-icon></button>
-                  }
-                  @if (auth.isAdmin()) {
-                    <button mat-icon-button color="warn" (click)="onDelete(row.id)"><mat-icon>delete</mat-icon></button>
-                  }
                 </td>
               </ng-container>
 
@@ -120,30 +74,14 @@ import { ConsultationListItem, Declaration, Doctor } from '@core/models';
       </mat-card>
     </div>
   `,
-  styles: [`.toolbar-card { margin-bottom: 16px; } .search { display:flex; gap:8px; align-items:center; } .spacer { flex: 1 1 auto; } .content-card { padding: 16px; } .table-wrapper { overflow: auto; } .form-grid { display:grid; grid-template-columns: repeat(2, 1fr); gap: 8px 16px; margin-bottom: 16px; } .full-width { grid-column: 1 / -1; } .form-actions { grid-column: 1 / -1; display:flex; justify-content:flex-end; gap: 8px; }`],
+  styles: [`.toolbar-card { margin-bottom: 16px; } .search { display:flex; gap:8px; align-items:center; } .spacer { flex: 1 1 auto; } .content-card { padding: 16px; } .table-wrapper { overflow: auto; }`],
 })
 export class ConsultationsComponent implements OnInit {
   private readonly service = inject(ConsultationService);
-  private readonly declarationService = inject(DeclarationService);
-  private readonly doctorService = inject(DoctorService);
-  readonly auth = inject(AuthService);
-
   readonly loading = signal(false);
   readonly data = signal<ConsultationListItem[]>([]);
-  readonly showForm = signal(false);
-  readonly editingId = signal<string | null>(null);
-  readonly declarations = signal<Declaration[]>([]);
-  readonly doctors = signal<Doctor[]>([]);
   readonly displayedColumns = ['reference', 'patient', 'doctor', 'date', 'status', 'actions'];
   readonly searchControl = new FormControl('');
-
-  readonly form = new FormGroup({
-    declarationId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    doctorId: new FormControl<string | null>(null),
-    scheduledAt: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    status: new FormControl<string>('planifiee', { nonNullable: true }),
-    notes: new FormControl(''),
-  });
 
   ngOnInit(): void {
     this.loadConsultations();
@@ -154,30 +92,7 @@ export class ConsultationsComponent implements OnInit {
   }
 
   onCreate(): void {
-    this.editingId.set(null);
-    this.form.reset({ declarationId: '', doctorId: null, scheduledAt: '', status: 'planifiee', notes: '' });
-    this.loadFormOptions();
-    this.showForm.set(true);
-  }
-
-  onEdit(id: string): void {
-    this.loading.set(true);
-    this.loadFormOptions();
-    this.service.getById(id).subscribe({
-      next: (consultation: any) => {
-        this.editingId.set(id);
-        this.form.reset({
-          declarationId: consultation.declarationId,
-          doctorId: consultation.doctorId ?? null,
-          scheduledAt: this.toDateTimeLocal(consultation.scheduledAt),
-          status: consultation.status ?? 'planifiee',
-          notes: consultation.notes ?? '',
-        });
-        this.showForm.set(true);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
+    console.warn('Create consultation workflow is not implemented yet.');
   }
 
   onView(id: string): void {
@@ -185,79 +100,6 @@ export class ConsultationsComponent implements OnInit {
     this.service.getById(id).subscribe({
       next: () => this.loading.set(false),
       error: () => this.loading.set(false),
-    });
-  }
-
-  onDelete(id: string): void {
-    if (!confirm('Supprimer cette consultation ?')) return;
-    this.loading.set(true);
-    this.service.delete(id).subscribe({
-      next: () => this.loadConsultations(this.searchControl.value?.trim() ?? ''),
-      error: () => this.loading.set(false),
-    });
-  }
-
-  submitForm(): void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-
-    this.loading.set(true);
-    const raw = this.form.getRawValue();
-
-    const payload: any = this.editingId()
-      ? {
-          doctorId: raw.doctorId || undefined,
-          scheduledAt: new Date(raw.scheduledAt).toISOString(),
-          status: raw.status,
-          notes: raw.notes || undefined,
-        }
-      : {
-          declarationId: raw.declarationId,
-          doctorId: raw.doctorId || undefined,
-          scheduledAt: new Date(raw.scheduledAt).toISOString(),
-          status: raw.status,
-          notes: raw.notes || undefined,
-        };
-
-    const request = this.editingId()
-      ? this.service.update(this.editingId()!, payload)
-      : this.service.create(payload);
-
-    request.subscribe({
-      next: () => {
-        this.cancelEdit();
-        this.loadConsultations(this.searchControl.value?.trim() ?? '');
-      },
-      error: () => this.loading.set(false),
-    });
-  }
-
-  cancelEdit(): void {
-    this.showForm.set(false);
-    this.editingId.set(null);
-    this.form.reset({ declarationId: '', doctorId: null, scheduledAt: '', status: 'planifiee', notes: '' });
-  }
-
-  declarationLabel(declaration: Declaration): string {
-    const agent = declaration.agent ? `${declaration.agent.firstName} ${declaration.agent.lastName}` : '—';
-    const ref = declaration.id.slice(0, 8);
-    return `${ref} — ${agent}`;
-  }
-
-  private toDateTimeLocal(value: string): string {
-    const date = new Date(value);
-    const pad = (n: number) => n.toString().padStart(2, '0');
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-  }
-
-  private loadFormOptions(): void {
-    this.declarationService.getAll({ page: 1, pageSize: 100 }).subscribe({
-      next: (response: any) => this.declarations.set(response.items),
-    });
-    this.doctorService.getAll({ page: 1, pageSize: 100 }).subscribe({
-      next: (response) => this.doctors.set(response.items),
     });
   }
 

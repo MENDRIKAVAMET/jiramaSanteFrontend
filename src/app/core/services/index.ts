@@ -11,6 +11,7 @@ export * from './notification.service';
 export * from './position.service';
 export * from './prescription.service';
 export * from './profile.service';
+export * from './search.service';
 export * from './service.service';
 export * from './session.service';
 export * from './symptom.service';

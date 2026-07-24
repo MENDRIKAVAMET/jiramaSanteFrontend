@@ -13,7 +13,7 @@
     <mat-progress-bar mode="indeterminate" color="primary"></mat-progress-bar>
   }
 
-  <!-- Banner de bienvenue -->
+  <!-- Welcome banner -->
   <div class="welcome-banner fade-in">
     <div class="welcome-content">
       <h2 class="welcome-title">Bonjour, {{ firstName() }} !</h2>
@@ -31,7 +31,7 @@
   }
 
   @if (auth.isAdmin()) {
-    <!-- Cartes statistiques principales -->
+    <!-- Stat cards -->
     <div class="stats-grid">
       <app-stat-card icon="assignment" label="Déclarations" [value]="stats()?.totalDeclarations ?? 0" color="primary" />
       <app-stat-card icon="medical_services" label="Consultations" [value]="stats()?.totalConsultations ?? 0" color="accent" />
@@ -39,7 +39,7 @@
       <app-stat-card icon="verified" label="Certificats" [value]="stats()?.totalCertificates ?? 0" color="warn" />
     </div>
 
-    <!-- Statilistiques secondaires -->
+    <!-- Secondary stats -->
     <div class="secondary-stats">
       <div class="mini-stat">
         <mat-icon class="mini-icon warn">pending_actions</mat-icon>
@@ -59,16 +59,16 @@
       </div>
     </div>
 
-    <!-- Row Graphiques -->
+    <!-- Charts row -->
     <div class="charts-row">
       <mat-card class="dashboard-card chart-card-large">
         <div class="card-header"><mat-icon class="card-icon">trending_up</mat-icon><h3 class="card-title">Évolution mensuelle</h3></div>
         <div class="chart-container">
           @if (monthlyTrend(); as trend) {
             <app-line-chart [labels]="trend.labels" [datasets]="[
-              { label: 'Déclarations', data: trend.declarations, borderColor: '#00796b', fill: true, tension: 0.3 },
-              { label: 'Consultations', data: trend.consultations, borderColor: '#e65100', fill: true, tension: 0.3 },
-              { label: 'Certificats', data: trend.certificates, borderColor: '#10b981', fill: true, tension: 0.3 }
+              { label: 'Déclarations', data: trend.declarations, borderColor: '#00897b', fill: true, tension: 0.3 },
+              { label: 'Consultations', data: trend.consultations, borderColor: '#1e88e5', fill: true, tension: 0.3 },
+              { label: 'Certificats', data: trend.certificates, borderColor: '#f44336', fill: true, tension: 0.3 }
             ]"></app-line-chart>
           } @else {
             <div class="chart-placeholder"><mat-icon class="chart-icon">show_chart</mat-icon><p class="chart-text">Aucune donnée disponible pour le moment</p></div>
@@ -88,13 +88,13 @@
       </mat-card>
     </div>
 
-    <!-- Middle Row (Bar Chart + Quick Actions) -->
+    <!-- Bar chart -->
     <div class="middle-row">
       <mat-card class="dashboard-card chart-card-medium">
         <div class="card-header"><mat-icon class="card-icon">bar_chart</mat-icon><h3 class="card-title">Déclarations par mois</h3></div>
         <div class="chart-container">
           @if (declarationChart(); as chart) {
-            <app-bar-chart [labels]="chart.labels" [data]="chart.submitted" label="Déclarations soumises" [colors]="['#00796b','#009688','#4db6ac','#80cbc4','#b2dfdb','#e0f2f1','#00796b','#009688','#4db6ac','#80cbc4','#b2dfdb','#e0f2f1']"></app-bar-chart>
+            <app-bar-chart [labels]="chart.labels" [data]="chart.submitted" label="Déclarations soumises" [colors]="['#00897b','#4db6ac','#80cbc4','#b2dfdb','#e0f2f1','#00897b','#4db6ac','#80cbc4','#b2dfdb','#e0f2f1','#00897b','#4db6ac']"></app-bar-chart>
           } @else {
             <div class="chart-placeholder"><mat-icon class="chart-icon">bar_chart</mat-icon><p class="chart-text">Aucune donnée disponible pour le moment</p></div>
           }
@@ -113,7 +113,7 @@
       </mat-card>
     </div>
   } @else {
-    <!-- Actions rapides adaptées aux autres rôles -->
+    <!-- Actions rapides, visibles pour Médecin / Agent (liens adaptés à leur rôle) -->
     <mat-card class="dashboard-card quick-actions-card">
       <div class="card-header"><mat-icon class="card-icon">bolt</mat-icon><h3 class="card-title">Actions rapides</h3></div>
       <div class="quick-actions-grid">
@@ -126,7 +126,7 @@
     </mat-card>
   }
 
-  <!-- Tables récentes -->
+  <!-- Recent tables -->
   <div class="tables-row">
     <mat-card class="dashboard-card table-card">
       <div class="card-header">
@@ -142,7 +142,7 @@
             <ng-container matColumnDef="agentName"><th mat-header-cell *matHeaderCellDef>Agent</th><td mat-cell *matCellDef="let row">{{ row.agentName }}</td></ng-container>
             <ng-container matColumnDef="status">
               <th mat-header-cell *matHeaderCellDef>Statut</th>
-              <td mat-cell *matCellDef="let row"><mat-chip [style.background]="getStatusColor(row.status) + '18'" [style.color]="getStatusColor(row.status)">{{ getStatusLabel(row.status) }}</mat-chip></td>
+              <td mat-cell *matCellDef="let row"><mat-chip [style.background]="getStatusColor(row.status) + '20'" [style.color]="getStatusColor(row.status)">{{ getStatusLabel(row.status) }}</mat-chip></td>
             </ng-container>
             <ng-container matColumnDef="declarationDate"><th mat-header-cell *matHeaderCellDef>Date</th><td mat-cell *matCellDef="let row">{{ row.declarationDate | date: 'dd/MM/yyyy' }}</td></ng-container>
             <tr mat-header-row *matHeaderRowDef="declarationColumns"></tr>
@@ -169,7 +169,7 @@
               <ng-container matColumnDef="date"><th mat-header-cell *matHeaderCellDef>Date</th><td mat-cell *matCellDef="let row">{{ row.date | date: 'dd/MM/yyyy' }}</td></ng-container>
               <ng-container matColumnDef="status">
                 <th mat-header-cell *matHeaderCellDef>Statut</th>
-                <td mat-cell *matCellDef="let row"><mat-chip [style.background]="getStatusColor(row.status) + '18'" [style.color]="getStatusColor(row.status)">{{ getStatusLabel(row.status) }}</mat-chip></td>
+                <td mat-cell *matCellDef="let row"><mat-chip [style.background]="getStatusColor(row.status) + '20'" [style.color]="getStatusColor(row.status)">{{ getStatusLabel(row.status) }}</mat-chip></td>
               </ng-container>
               <tr mat-header-row *matHeaderRowDef="consultationColumns"></tr>
               <tr mat-row *matRowDef="let row; columns: consultationColumns"></tr>
@@ -180,7 +180,7 @@
     }
   </div>
 
-  <!-- Bottom Row (Activité + Notifications) -->
+  <!-- Activity + Notifications -->
   <div class="bottom-row">
     <mat-card class="dashboard-card activity-card">
       <div class="card-header"><mat-icon class="card-icon">history</mat-icon><h3 class="card-title">Activité récente</h3></div>

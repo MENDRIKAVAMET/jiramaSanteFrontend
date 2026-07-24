@@ -9,6 +9,12 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+body {
+  background-color: var(--jirama-bg);
+  color: var(--jirama-text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
 :root {
   --jirama-header-height: 64px;
   --jirama-sidenav-width: 260px;
@@ -17,6 +23,33 @@ html, body {
   --jirama-card-radius: 12px;
   --jirama-card-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   --jirama-card-shadow-hover: 0 2px 12px rgba(0, 0, 0, 0.08);
+
+  --jirama-bg: #f5f7fa;
+  --jirama-surface: #ffffff;
+  --jirama-surface-alt: #f5f7fa;
+  --jirama-text-primary: #1a1a1a;
+  --jirama-text-secondary: #78909c;
+  --jirama-text-muted: #b0bec5;
+  --jirama-border: rgba(0, 0, 0, 0.06);
+  --jirama-border-strong: rgba(0, 0, 0, 0.12);
+  --jirama-hover: rgba(0, 137, 123, 0.06);
+}
+
+.dark-theme {
+  --jirama-bg: #12161a;
+  --jirama-surface: #1c2126;
+  --jirama-surface-alt: #20262c;
+  --jirama-text-primary: #e8eaed;
+  --jirama-text-secondary: #a3b1bd;
+  --jirama-text-muted: #7c8b98;
+  --jirama-border: rgba(255, 255, 255, 0.08);
+  --jirama-border-strong: rgba(255, 255, 255, 0.16);
+  --jirama-hover: rgba(0, 137, 123, 0.14);
+  --jirama-toolbar-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --jirama-card-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  --jirama-card-shadow-hover: 0 2px 12px rgba(0, 0, 0, 0.4);
+
+  color-scheme: dark;
 }
 
 $theme: mat.define-theme((
@@ -32,7 +65,24 @@ $theme: mat.define-theme((
   density: (scale: 0),
 ));
 
+$dark-theme: mat.define-theme((
+  color: (
+    theme-type: dark,
+    primary: mat.$azure-palette,
+    tertiary: mat.$green-palette,
+  ),
+  typography: (
+    brand-family: 'Inter, sans-serif',
+    plain-family: 'Inter, sans-serif',
+  ),
+  density: (scale: 0),
+));
+
 @include mat.all-component-themes($theme);
+
+.dark-theme {
+  @include mat.all-component-colors($dark-theme);
+}
 
 .fade-in {
   animation: fadeIn 0.3s ease-out;
@@ -54,7 +104,13 @@ $theme: mat.define-theme((
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12) !important;
 }
 
+.dark-theme .mat-mdc-menu-panel {
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5) !important;
+}
+
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #b2dfdb; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #80cbc4; }
+.dark-theme ::-webkit-scrollbar-thumb { background: #37474f; }
+.dark-theme ::-webkit-scrollbar-thumb:hover { background: #455a64; }
