@@ -36,10 +36,6 @@ import { Direction } from '@core/models';
       <mat-card class="content-card">
         <form *ngIf="showForm()" [formGroup]="form" class="form-grid" (ngSubmit)="submitForm()">
           <mat-form-field appearance="outline">
-            <mat-label>Code</mat-label>
-            <input matInput formControlName="code" />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
             <mat-label>Nom</mat-label>
             <input matInput formControlName="name" />
           </mat-form-field>
@@ -97,7 +93,6 @@ export class DirectionsComponent implements OnInit {
   readonly displayedColumns = ['code', 'name', 'description', 'actions'];
   readonly searchControl = new FormControl('');
   readonly form = new FormGroup({
-    code: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     description: new FormControl('', { nonNullable: true }),
   });
@@ -112,7 +107,7 @@ export class DirectionsComponent implements OnInit {
 
   onCreate(): void {
     this.editingId.set(null);
-    this.form.reset({ code: '', name: '', description: '' });
+    this.form.reset({ name: '', description: '' });
     this.showForm.set(true);
   }
 
@@ -121,7 +116,7 @@ export class DirectionsComponent implements OnInit {
     this.service.getById(id).subscribe({
       next: (direction) => {
         this.editingId.set(id);
-        this.form.reset({ code: direction.code, name: direction.name, description: direction.description ?? '' });
+        this.form.reset({ name: direction.name, description: direction.description ?? '' });
         this.showForm.set(true);
         this.loading.set(false);
       },
@@ -161,7 +156,7 @@ export class DirectionsComponent implements OnInit {
   cancelEdit(): void {
     this.showForm.set(false);
     this.editingId.set(null);
-    this.form.reset({ code: '', name: '', description: '' });
+    this.form.reset({ name: '', description: '' });
   }
 
   private loadDirections(query = ''): void {

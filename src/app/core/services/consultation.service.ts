@@ -5,6 +5,15 @@ import { environment } from '@env/environment';
 import { Consultation, PaginatedResponse, PaginationParams } from '../models';
 import { toHttpParams } from './http-utils';
 
+/** Libellé lisible pour une consultation dans une liste déroulante de sélection. */
+export function consultationOptionLabel(consultation: any): string {
+  const ref = consultation.id ? String(consultation.id).slice(0, 8) : '—';
+  const patient = consultation.declaration?.agent
+    ? `${consultation.declaration.agent.firstName} ${consultation.declaration.agent.lastName}`
+    : '—';
+  return `${ref} — ${patient}`;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ConsultationService {
   private readonly http = inject(HttpClient);

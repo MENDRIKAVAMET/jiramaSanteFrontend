@@ -5,6 +5,23 @@ import { environment } from '@env/environment';
 import { Declaration, DeclarationListItem, PaginatedResponse, PaginationParams } from '../models';
 import { toHttpParams } from './http-utils';
 
+/**
+ * Le backend renvoie l'entité `Declaration` brute (avec `number` et une
+ * relation `agent` imbriquée), pas la forme aplatie `DeclarationListItem`.
+ * Cette fonction convertit une déclaration brute vers la forme utilisée
+ * par les tableaux et les listes déroulantes de sélection.
+ */
+export function mapDeclarationToListItem(declaration: any): DeclarationListItem {
+  return {
+    id: declaration.id,
+    reference: declaration.reference ?? declaration.number ?? '—',
+    agentName: declaration.agentName
+      ?? (declaration.agent ? `${declaration.agent.firstName} ${declaration.agent.lastName}` : '—'),
+    status: declaration.status,
+    declarationDate: declaration.declarationDate ?? declaration.date,
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class DeclarationService {
   private readonly http = inject(HttpClient);

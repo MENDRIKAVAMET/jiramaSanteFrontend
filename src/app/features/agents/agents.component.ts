@@ -5,19 +5,20 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
 
 import { PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent } from '@shared/components';
-import { AgentService } from '@core/services';
-import { Agent, CreatedAccountInfo } from '@core/models';
+import { AgentService, DirectionService, ServiceService, PositionService } from '@core/services';
+import { Agent, CreatedAccountInfo, Direction, Service, Position } from '@core/models';
 
 @Component({
   selector: 'app-agents',
   standalone: true,
   imports: [
     CommonModule, ReactiveFormsModule,
-    MatCardModule, MatIconModule, MatButtonModule, MatInputModule, MatTableModule, MatToolbarModule,
+    MatCardModule, MatIconModule, MatButtonModule, MatInputModule, MatSelectModule, MatTableModule, MatToolbarModule,
     PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent,
   ],
   template: `
@@ -51,10 +52,6 @@ import { Agent, CreatedAccountInfo } from '@core/models';
       <mat-card class="content-card">
         <form *ngIf="showForm()" [formGroup]="form" class="form-grid" (ngSubmit)="submitForm()">
           <mat-form-field appearance="outline">
-            <mat-label>Matricule</mat-label>
-            <input matInput formControlName="matricule" />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
             <mat-label>Prénom</mat-label>
             <input matInput formControlName="firstName" />
           </mat-form-field>
@@ -73,6 +70,27 @@ import { Agent, CreatedAccountInfo } from '@core/models';
           <mat-form-field appearance="outline">
             <mat-label>Poste</mat-label>
             <input matInput formControlName="poste" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Direction</mat-label>
+            <mat-select formControlName="directionId">
+              <mat-option value="">—</mat-option>
+              <mat-option *ngFor="let direction of directions()" [value]="direction.id">{{ direction.name }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Service</mat-label>
+            <mat-select formControlName="serviceId">
+              <mat-option value="">—</mat-option>
+              <mat-option *ngFor="let service of services()" [value]="service.id">{{ service.name }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Fonction</mat-label>
+            <mat-select formControlName="positionId">
+              <mat-option value="">—</mat-option>
+              <mat-option *ngFor="let position of positions()" [value]="position.id">{{ position.title }}</mat-option>
+            </mat-select>
           </mat-form-field>
           <div class="form-actions">
             <button mat-stroked-button type="button" (click)="cancelEdit()">Annuler</button>
@@ -142,24 +160,35 @@ import { Agent, CreatedAccountInfo } from '@core/models';
 })
 export class AgentsComponent implements OnInit {
   private readonly service = inject(AgentService);
+  private readonly directionService = inject(DirectionService);
+  private readonly serviceService = inject(ServiceService);
+  private readonly positionService = inject(PositionService);
   readonly loading = signal(false);
   readonly data = signal<Agent[]>([]);
+  readonly directions = signal<Direction[]>([]);
+  readonly services = signal<Service[]>([]);
+  readonly positions = signal<Position[]>([]);
   readonly showForm = signal(false);
   readonly editingId = signal<string | null>(null);
   readonly createdAccount = signal<CreatedAccountInfo | null>(null);
   readonly displayedColumns = ['matricule', 'firstName', 'lastName', 'email', 'directionName', 'serviceName', 'actions'];
   readonly searchControl = new FormControl('');
   readonly form = new FormGroup({
-    matricule: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     firstName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     lastName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
     phone: new FormControl('', { nonNullable: true }),
     poste: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    directionId: new FormControl('', { nonNullable: true }),
+    serviceId: new FormControl('', { nonNullable: true }),
+    positionId: new FormControl('', { nonNullable: true }),
   });
 
   ngOnInit(): void {
     this.loadAgents();
+    this.loadDirections();
+    this.loadServices();
+    this.loadPositions();
   }
 
   onSearch(): void {
@@ -169,7 +198,7 @@ export class AgentsComponent implements OnInit {
   onCreate(): void {
     this.editingId.set(null);
     this.createdAccount.set(null);
-    this.form.reset({ matricule: '', firstName: '', lastName: '', email: '', phone: '', poste: '' });
+    this.form.reset({ firstName: '', lastName: '', email: '', phone: '', poste: '', directionId: '', serviceId: '', positionId: '' });
     this.showForm.set(true);
   }
 
@@ -179,12 +208,14 @@ export class AgentsComponent implements OnInit {
       next: (agent) => {
         this.editingId.set(id);
         this.form.reset({
-          matricule: agent.matricule,
           firstName: agent.firstName,
           lastName: agent.lastName,
           email: agent.email,
           phone: agent.phone ?? '',
           poste: agent.poste ?? '',
+          directionId: agent.directionId ?? '',
+          serviceId: agent.serviceId ?? '',
+          positionId: agent.positionId ?? '',
         });
         this.showForm.set(true);
         this.loading.set(false);
@@ -235,7 +266,25 @@ export class AgentsComponent implements OnInit {
   cancelEdit(): void {
     this.showForm.set(false);
     this.editingId.set(null);
-    this.form.reset({ matricule: '', firstName: '', lastName: '', email: '', phone: '', poste: '' });
+    this.form.reset({ firstName: '', lastName: '', email: '', phone: '', poste: '', directionId: '', serviceId: '', positionId: '' });
+  }
+
+  private loadDirections(): void {
+    this.directionService.getAll({ page: 1, pageSize: 100 }).subscribe({
+      next: (response) => this.directions.set(response.items),
+    });
+  }
+
+  private loadServices(): void {
+    this.serviceService.getAll({ page: 1, pageSize: 100 }).subscribe({
+      next: (response) => this.services.set(response.items),
+    });
+  }
+
+  private loadPositions(): void {
+    this.positionService.getAll({ page: 1, pageSize: 100 }).subscribe({
+      next: (response) => this.positions.set(response.items),
+    });
   }
 
   private loadAgents(query = ''): void {

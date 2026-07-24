@@ -10,7 +10,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
 
 import { PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent } from '@shared/components';
-import { CertificateService, DeclarationService, DoctorService } from '@core/services';
+import { CertificateService, DeclarationService, DoctorService, mapDeclarationToListItem } from '@core/services';
 import { AuthService } from '@core/services/auth.service';
 import { CertificateListItem, DeclarationListItem, Doctor, CertificateType, CERTIFICATE_TYPE_LABELS } from '@core/models';
 
@@ -241,7 +241,7 @@ export class CertificatesComponent implements OnInit {
 
   private loadFormOptions(): void {
     this.declarationService.getAll({ page: 1, pageSize: 100 }).subscribe({
-      next: (response) => this.declarations.set(response.items),
+      next: (response) => this.declarations.set(response.items.map(mapDeclarationToListItem)),
     });
     this.doctorService.getAll({ page: 1, pageSize: 100 }).subscribe({
       next: (response) => this.doctors.set(response.items),
