@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
@@ -8,10 +8,14 @@ import { MatIconModule } from '@angular/material/icon';
   template: `
     <div class="page-header">
       <div class="header-content">
-        <mat-icon class="header-icon">dashboard</mat-icon>
+        @if (icon) {
+          <mat-icon class="header-icon">{{ icon }}</mat-icon>
+        }
         <div class="header-text">
-          <h1 class="header-title">Tableau de bord</h1>
-          <p class="header-subtitle">Gestion et vue d'ensemble des activités</p>
+          <h1 class="header-title">{{ title }}</h1>
+          @if (subtitle) {
+            <p class="header-subtitle">{{ subtitle }}</p>
+          }
         </div>
       </div>
       <div class="header-actions">
@@ -29,8 +33,7 @@ import { MatIconModule } from '@angular/material/icon';
   `],
 })
 export class PageHeaderComponent {
-  // Valeurs hardcodées directement dans la classe si besoin
-  icon = 'dashboard';
-  title = 'Tableau de bord';
-  subtitle = 'Gestion et vue d\'ensemble des activités';
+  @Input() icon = '';
+  @Input() title = '';
+  @Input() subtitle = '';
 }

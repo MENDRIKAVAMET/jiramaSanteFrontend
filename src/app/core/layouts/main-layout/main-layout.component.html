@@ -60,7 +60,7 @@
       <div class="search-wrapper">
         <mat-form-field appearance="outline" class="search-field">
           <mat-icon matPrefix class="search-icon">search</mat-icon>
-          <input matInput placeholder="Rechercher…" />
+          <input matInput placeholder="Rechercher une déclaration…" [formControl]="globalSearchControl" (keyup.enter)="onGlobalSearch()" />
         </mat-form-field>
       </div>
 

@@ -40,7 +40,10 @@ import { NotificationListItem } from '@core/models';
             <table mat-table [dataSource]="data()" class="mat-elevation-z2">
               <ng-container matColumnDef="title">
                 <th mat-header-cell *matHeaderCellDef>Titre</th>
-                <td mat-cell *matCellDef="let row">{{ row.title }}</td>
+                <td mat-cell *matCellDef="let row">
+                  {{ row.title }}
+                  @if (!row.isRead) { <mat-icon class="unread-dot" inline="true">fiber_manual_record</mat-icon> }
+                </td>
               </ng-container>
               <ng-container matColumnDef="channel">
                 <th mat-header-cell *matHeaderCellDef>Canal</th>
@@ -65,7 +68,7 @@ import { NotificationListItem } from '@core/models';
       </mat-card>
     </div>
   `,
-  styles: [`.toolbar-card { margin-bottom: 16px; } .search { display:flex; gap:8px; align-items:center; } .spacer { flex: 1 1 auto; } .content-card { padding: 16px; } .table-wrapper { overflow: auto; }`],
+  styles: [`.toolbar-card { margin-bottom: 16px; } .search { display:flex; gap:8px; align-items:center; } .spacer { flex: 1 1 auto; } .content-card { padding: 16px; } .table-wrapper { overflow: auto; } .unread-dot { color: #e65100; font-size: 10px; width: 10px; height: 10px; margin-left: 6px; vertical-align: middle; }`],
 })
 export class NotificationsComponent implements OnInit {
   private readonly service = inject(NotificationService);
@@ -84,8 +87,8 @@ export class NotificationsComponent implements OnInit {
 
   onView(id: string): void {
     this.loading.set(true);
-    this.service.getById(id).subscribe({
-      next: () => this.loading.set(false),
+    this.service.markAsRead(id).subscribe({
+      next: () => this.loadNotifications(this.searchControl.value?.trim() ?? ''),
       error: () => this.loading.set(false),
     });
   }
