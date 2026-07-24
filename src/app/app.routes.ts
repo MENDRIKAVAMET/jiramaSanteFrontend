@@ -83,6 +83,10 @@ export const APP_ROUTES: Routes = [
         loadComponent: () => import('@features/profile/profile.component').then((m) => m.ProfileComponent),
       },
       {
+        path: 'change-password',
+        loadComponent: () => import('@features/change-password/change-password.component').then((m) => m.ChangePasswordComponent),
+      },
+      {
         path: 'settings',
         loadComponent: () => import('@features/settings/settings.component').then((m) => m.SettingsComponent),
       },

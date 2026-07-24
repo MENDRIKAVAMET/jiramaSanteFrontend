@@ -10,7 +10,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 
 import { PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent } from '@shared/components';
 import { DoctorService } from '@core/services';
-import { Doctor } from '@core/models';
+import { CreatedAccountInfo, Doctor } from '@core/models';
 
 @Component({
   selector: 'app-doctors',
@@ -31,6 +31,17 @@ import { Doctor } from '@core/models';
           <span class="spacer"></span>
           <button mat-flat-button color="primary" (click)="onCreate()"><mat-icon>add</mat-icon> Nouveau médecin</button>
         </mat-toolbar>
+      </mat-card>
+
+      <mat-card *ngIf="createdAccount() as account" class="account-card">
+        <mat-icon color="primary">vpn_key</mat-icon>
+        <div class="account-info">
+          <strong>Compte créé avec succès.</strong>
+          <span>Email : {{ account.email }}</span>
+          <span>Mot de passe temporaire : <code>{{ account.temporaryPassword }}</code></span>
+          <small>Communiquez ces identifiants au médecin ; il devra changer ce mot de passe à la première connexion.</small>
+        </div>
+        <button mat-icon-button (click)="createdAccount.set(null)"><mat-icon>close</mat-icon></button>
       </mat-card>
 
       <mat-card class="content-card">
@@ -98,7 +109,10 @@ import { Doctor } from '@core/models';
       </mat-card>
     </div>
   `,
-  styles: [`.toolbar-card { margin-bottom: 16px; } .search { display:flex; gap:8px; align-items:center; } .spacer { flex: 1 1 auto; } .content-card { padding: 16px; } .table-wrapper { overflow: auto; }`],
+  styles: [`.toolbar-card { margin-bottom: 16px; } .search { display:flex; gap:8px; align-items:center; } .spacer { flex: 1 1 auto; } .content-card { padding: 16px; } .table-wrapper { overflow: auto; }
+    .account-card { margin-bottom:16px; padding:16px; display:flex; align-items:flex-start; gap:12px; background:#e8f5e9; }
+    .account-info { display:flex; flex-direction:column; gap:2px; flex:1; }
+    .account-info code { background:#fff; padding:2px 6px; border-radius:4px; }`],
 })
 export class DoctorsComponent implements OnInit {
   private readonly service = inject(DoctorService);
@@ -106,6 +120,7 @@ export class DoctorsComponent implements OnInit {
   readonly data = signal<Doctor[]>([]);
   readonly showForm = signal(false);
   readonly editingId = signal<string | null>(null);
+  readonly createdAccount = signal<CreatedAccountInfo | null>(null);
   readonly displayedColumns = ['firstName', 'lastName', 'specialty', 'email', 'actions'];
   readonly searchControl = new FormControl('');
   readonly form = new FormGroup({
@@ -126,6 +141,7 @@ export class DoctorsComponent implements OnInit {
 
   onCreate(): void {
     this.editingId.set(null);
+    this.createdAccount.set(null);
     this.form.reset({ firstName: '', lastName: '', email: '', specialty: '', registrationNumber: '' });
     this.showForm.set(true);
   }
@@ -165,11 +181,21 @@ export class DoctorsComponent implements OnInit {
 
     this.loading.set(true);
     const payload = this.form.getRawValue();
-    const request = this.editingId()
-      ? this.service.update(this.editingId()!, { ...payload, phone: '' })
-      : this.service.create({ ...payload, phone: '' } as Doctor);
+    const isCreate = !this.editingId();
 
-    request.subscribe({
+    if (isCreate) {
+      this.service.create({ ...payload, phone: '' } as Doctor).subscribe({
+        next: (created) => {
+          this.createdAccount.set(created.account);
+          this.cancelEdit();
+          this.loadDoctors(this.searchControl.value?.trim() ?? '');
+        },
+        error: () => this.loading.set(false),
+      });
+      return;
+    }
+
+    this.service.update(this.editingId()!, { ...payload, phone: '' }).subscribe({
       next: () => {
         this.cancelEdit();
         this.loadDoctors(this.searchControl.value?.trim() ?? '');

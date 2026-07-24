@@ -13,5 +13,4 @@ export * from './notification.model';
 export * from './organization.model';
 export * from './prescription.model';
 export * from './profile.model';
-export * from './search.model';
 export * from './symptom.model';

@@ -10,7 +10,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 
 import { PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent } from '@shared/components';
 import { AgentService } from '@core/services';
-import { Agent } from '@core/models';
+import { Agent, CreatedAccountInfo } from '@core/models';
 
 @Component({
   selector: 'app-agents',
@@ -35,6 +35,17 @@ import { Agent } from '@core/models';
           <span class="spacer"></span>
           <button mat-flat-button color="primary" (click)="onCreate()"><mat-icon>add</mat-icon> Nouvel agent</button>
         </mat-toolbar>
+      </mat-card>
+
+      <mat-card *ngIf="createdAccount() as account" class="account-card">
+        <mat-icon color="primary">vpn_key</mat-icon>
+        <div class="account-info">
+          <strong>Compte créé avec succès.</strong>
+          <span>Email : {{ account.email }}</span>
+          <span>Mot de passe temporaire : <code>{{ account.temporaryPassword }}</code></span>
+          <small>Communiquez ces identifiants à l'agent ; il devra changer ce mot de passe à la première connexion.</small>
+        </div>
+        <button mat-icon-button (click)="createdAccount.set(null)"><mat-icon>close</mat-icon></button>
       </mat-card>
 
       <mat-card class="content-card">
@@ -123,7 +134,10 @@ import { Agent } from '@core/models';
     .content-card { padding: 16px; }
     .table-wrapper { overflow: auto; }
     .form-grid { display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom:16px; }
-    .form-actions { grid-column: 1 / -1; display:flex; justify-content:flex-end; gap:8px; }`
+    .form-actions { grid-column: 1 / -1; display:flex; justify-content:flex-end; gap:8px; }
+    .account-card { margin-bottom:16px; padding:16px; display:flex; align-items:flex-start; gap:12px; background:#e8f5e9; }
+    .account-info { display:flex; flex-direction:column; gap:2px; flex:1; }
+    .account-info code { background:#fff; padding:2px 6px; border-radius:4px; }`
   ],
 })
 export class AgentsComponent implements OnInit {
@@ -132,6 +146,7 @@ export class AgentsComponent implements OnInit {
   readonly data = signal<Agent[]>([]);
   readonly showForm = signal(false);
   readonly editingId = signal<string | null>(null);
+  readonly createdAccount = signal<CreatedAccountInfo | null>(null);
   readonly displayedColumns = ['matricule', 'firstName', 'lastName', 'email', 'directionName', 'serviceName', 'actions'];
   readonly searchControl = new FormControl('');
   readonly form = new FormGroup({
@@ -153,6 +168,7 @@ export class AgentsComponent implements OnInit {
 
   onCreate(): void {
     this.editingId.set(null);
+    this.createdAccount.set(null);
     this.form.reset({ matricule: '', firstName: '', lastName: '', email: '', phone: '', poste: '' });
     this.showForm.set(true);
   }
@@ -193,12 +209,21 @@ export class AgentsComponent implements OnInit {
 
     this.loading.set(true);
     const payload = this.form.getRawValue();
+    const isCreate = !this.editingId();
 
-    const request = this.editingId()
-      ? this.service.update(this.editingId()!, payload)
-      : this.service.create({ ...payload, hireDate: new Date().toISOString() } as unknown as Agent);
+    if (isCreate) {
+      this.service.create({ ...payload, hireDate: new Date().toISOString() } as unknown as Agent).subscribe({
+        next: (created) => {
+          this.createdAccount.set(created.account);
+          this.cancelEdit();
+          this.loadAgents(this.searchControl.value?.trim() ?? '');
+        },
+        error: () => this.loading.set(false),
+      });
+      return;
+    }
 
-    request.subscribe({
+    this.service.update(this.editingId()!, payload).subscribe({
       next: () => {
         this.cancelEdit();
         this.loadAgents(this.searchControl.value?.trim() ?? '');

@@ -20,3 +20,18 @@ export interface ApiError {
   error: string;
   details?: Record<string, unknown>;
 }
+
+/**
+ * Informations sur le compte utilisateur créé automatiquement
+ * (ex: lors de la création d'un agent ou d'un médecin).
+ */
+export interface CreatedAccountInfo {
+  email: string;
+  temporaryPassword: string;
+}
+
+/**
+ * Enveloppe générique pour une entité renvoyée avec les informations
+ * du compte utilisateur créé en même temps qu'elle.
+ */
+export type WithAccount<T> = T & { account: CreatedAccountInfo };

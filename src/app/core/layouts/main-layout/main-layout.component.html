@@ -60,35 +60,8 @@
       <div class="search-wrapper">
         <mat-form-field appearance="outline" class="search-field">
           <mat-icon matPrefix class="search-icon">search</mat-icon>
-          <input
-            matInput
-            placeholder="Rechercher agents, médecins, déclarations…"
-            autocomplete="off"
-            [ngModel]="searchQuery()"
-            (ngModelChange)="onSearchInput($event)"
-            (focus)="onSearchFocus()"
-          />
+          <input matInput placeholder="Rechercher…" />
         </mat-form-field>
-
-        @if (searchPanelOpen() && searchQuery().trim().length >= 2) {
-          <div class="search-results-panel">
-            @if (searchLoading()) {
-              <div class="search-status">Recherche…</div>
-            } @else if (searchResults().length === 0) {
-              <div class="search-status">Aucun résultat pour « {{ searchQuery() }} »</div>
-            } @else {
-              @for (item of searchResults(); track trackBySearchResult($index, item)) {
-                <button type="button" class="search-result-item" (click)="goToSearchResult(item)">
-                  <mat-icon>{{ item.icon }}</mat-icon>
-                  <div class="search-result-text">
-                    <span class="search-result-title">{{ item.title }}</span>
-                    <span class="search-result-subtitle">{{ item.subtitle }}</span>
-                  </div>
-                </button>
-              }
-            }
-          </div>
-        }
       </div>
 
       <button mat-icon-button (click)="toggleTheme()" [matTooltip]="(theme.theme() === 'light' ? 'Mode sombre' : 'Mode clair')" class="toolbar-btn">

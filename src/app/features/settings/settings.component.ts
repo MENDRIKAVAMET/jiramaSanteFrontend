@@ -1,13 +1,11 @@
 import { Component, inject } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { PageHeaderComponent } from '@shared/components';
 import { ThemeService } from '@core/services';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [PageHeaderComponent, MatButtonModule, MatIconModule],
+  imports: [PageHeaderComponent],
   template: `
     <div class="page-container">
       <app-page-header
@@ -20,22 +18,28 @@ import { ThemeService } from '@core/services';
         <h3 class="section-title">Apparence</h3>
         <div class="setting-row">
           <span>Thème de l'application</span>
-          <button mat-stroked-button color="primary" (click)="theme.toggle()">
-            <mat-icon>{{ theme.theme() === 'light' ? 'dark_mode' : 'light_mode' }}</mat-icon>
-            {{ theme.theme() === 'light' ? 'Clair' : 'Sombre' }}
-          </button>
+          <span class="theme-value">{{ theme.theme() === 'light' ? 'Clair' : 'Sombre' }}</span>
         </div>
       </div>
+
+      <p class="placeholder-text">
+        Les paramètres supplémentaires seront disponibles ici une fois le backend connecté.
+      </p>
     </div>
   `,
   styles: [`
+    .placeholder-text {
+      color: #78909c;
+      font-size: 15px;
+      line-height: 1.6;
+    }
     .settings-section {
       margin-bottom: 24px;
     }
     .section-title {
       font-size: 16px;
       font-weight: 500;
-      color: var(--jirama-text-primary);
+      color: #333;
       margin-bottom: 12px;
     }
     .setting-row {
@@ -43,12 +47,11 @@ import { ThemeService } from '@core/services';
       align-items: center;
       justify-content: space-between;
       padding: 12px 0;
-      border-bottom: 1px solid var(--jirama-border);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     }
-    .setting-row button {
-      display: flex;
-      align-items: center;
-      gap: 6px;
+    .theme-value {
+      color: #00897b;
+      font-weight: 500;
     }
   `],
 })

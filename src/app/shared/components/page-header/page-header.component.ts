@@ -27,8 +27,8 @@ import { MatIconModule } from '@angular/material/icon';
     .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
     .header-content { display: flex; align-items: center; gap: 16px; }
     .header-icon { font-size: 36px; width: 36px; height: 36px; color: #00897b; }
-    .header-title { font-size: 24px; font-weight: 500; color: var(--jirama-text-primary); margin: 0; }
-    .header-subtitle { font-size: 14px; color: var(--jirama-text-secondary); margin-top: 4px; }
+    .header-title { font-size: 24px; font-weight: 500; color: #1a1a1a; margin: 0; }
+    .header-subtitle { font-size: 14px; color: #78909c; margin-top: 4px; }
     .header-actions { display: flex; align-items: center; gap: 8px; }
   `],
 })

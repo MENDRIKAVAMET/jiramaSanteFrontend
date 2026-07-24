@@ -11,7 +11,12 @@ export const authGuard: CanActivateFn = (_route, state): boolean | UrlTree => {
   const isPublicRoute = PUBLIC_ROUTES.includes(state.url);
   const isAuthenticated = auth.isAuthenticated() && !auth.isTokenExpired();
 
-  if (isAuthenticated) return true;
+  if (isAuthenticated) {
+    if (auth.mustChangePassword() && !state.url.startsWith('/change-password')) {
+      return router.createUrlTree(['/change-password']);
+    }
+    return true;
+  }
   if (isPublicRoute) return true;
 
   auth.clearSession();

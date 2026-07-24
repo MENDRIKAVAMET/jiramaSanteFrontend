@@ -87,8 +87,12 @@ export class AuthComponent {
     this.errorMessage.set(null);
     const { email, password } = this.form.getRawValue() as { email: string; password: string };
     this.auth.login({ email, password }).subscribe({
-      next: () => {
+      next: (res) => {
         this.loading.set(false);
+        if (res.mustChangePassword) {
+          this.router.navigateByUrl('/change-password');
+          return;
+        }
         const redirect = this.route.snapshot.queryParamMap.get('redirect');
         const user = this.auth.currentUser();
         this.router.navigateByUrl(redirect ?? (user ? getDefaultRouteForRole(user.role) : '/dashboard'));

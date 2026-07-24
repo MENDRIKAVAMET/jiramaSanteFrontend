@@ -20,10 +20,12 @@ export class AuthService {
   private readonly _currentUser = signal<User | null>(null);
   private readonly _tokens = signal<AuthTokens | null>(null);
   private readonly _initializing = signal(true);
+  private readonly _mustChangePassword = signal(false);
 
   readonly currentUser = this._currentUser.asReadonly();
   readonly tokens = this._tokens.asReadonly();
   readonly initializing = this._initializing.asReadonly();
+  readonly mustChangePassword = this._mustChangePassword.asReadonly();
 
   readonly isAuthenticated = computed(() => this._currentUser() !== null);
   readonly userRole = computed<UserRole | null>(() => this._currentUser()?.role ?? null);
@@ -35,11 +37,12 @@ export class AuthService {
     this.restoreSession();
   }
 
-  login(credentials: AuthCredentials): Observable<{ access_token: string }> {
-    return this.http.post<{ access_token: string }>(`${this.baseUrl}/login`, credentials).pipe(
+  login(credentials: AuthCredentials): Observable<{ access_token: string; mustChangePassword: boolean }> {
+    return this.http.post<{ access_token: string; mustChangePassword: boolean }>(`${this.baseUrl}/login`, credentials).pipe(
       tap((res) => {
         const token = res.access_token;
         this.persistTokens({ accessToken: token });
+        this._mustChangePassword.set(!!res.mustChangePassword);
         const payload = this.decodeJwt(token);
         if (payload) {
           // Le JWT ne contient que sub/role/exp/iat : on pose un utilisateur minimal
@@ -56,11 +59,21 @@ export class AuthService {
   /** Recharge le profil complet (prénom, nom, matricule...) depuis /profile. */
   private fetchAndSetProfile(): void {
     this.http.get<User>(`${environment.apiUrl}/profile`).subscribe({
-      next: (profile) => this._currentUser.set(profile),
+      next: (profile) => {
+        this._currentUser.set(profile);
+        if (typeof profile.mustChangePassword === 'boolean') {
+          this._mustChangePassword.set(profile.mustChangePassword);
+        }
+      },
       error: () => {
         // On garde l'utilisateur minimal décodé du JWT si /profile échoue.
       },
     });
+  }
+
+  /** Appelé après un changement de mot de passe réussi pour lever la contrainte. */
+  clearMustChangePassword(): void {
+    this._mustChangePassword.set(false);
   }
 
   logout(): void {
@@ -118,6 +131,7 @@ export class AuthService {
   public clearSession(): void {
     this._currentUser.set(null);
     this._tokens.set(null);
+    this._mustChangePassword.set(false);
     localStorage.removeItem(APP_CONSTANTS.tokenStorageKey);
   }
 

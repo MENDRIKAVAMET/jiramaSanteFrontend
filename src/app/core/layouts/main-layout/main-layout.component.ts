@@ -1,6 +1,5 @@
-import { Component, HostListener, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive, NavigationEnd } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatListModule } from '@angular/material/list';
@@ -13,15 +12,14 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { Subject, catchError, debounceTime, distinctUntilChanged, filter, of, switchMap } from 'rxjs';
+import { filter } from 'rxjs';
 
 import { SessionService } from '@core/services/session.service';
 import { AuthService } from '@core/services/auth.service';
 import { ThemeService } from '@core/services/theme.service';
-import { SearchService } from '@core/services/search.service';
 import { FooterComponent, BreadcrumbComponent, BreadcrumbItem } from '@shared/components';
 import { NAV_ITEMS, NavItem } from './nav-items';
-import { UserRole, SearchResultItem } from '@core/models';
+import { UserRole } from '@core/models';
 
 const ROLE_LABELS: Record<UserRole, string> = {
   ADMINISTRATEUR: 'Administrateur',
@@ -42,7 +40,7 @@ interface NotificationItem {
   selector: 'app-main-layout',
   standalone: true,
   imports: [
-    RouterOutlet, RouterLink, RouterLinkActive, FormsModule,
+    RouterOutlet, RouterLink, RouterLinkActive,
     MatSidenavModule, MatToolbarModule, MatListModule,
     MatButtonModule, MatIconModule, MatTooltipModule, MatBadgeModule,
     MatMenuModule, MatDividerModule, MatFormFieldModule, MatInputModule,
@@ -55,7 +53,6 @@ export class MainLayoutComponent {
   private readonly session = inject(SessionService);
   private readonly auth = inject(AuthService);
   readonly theme = inject(ThemeService);
-  private readonly searchService = inject(SearchService);
   private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly router = inject(Router);
 
@@ -67,12 +64,6 @@ export class MainLayoutComponent {
   readonly sidebarCollapsed = signal(false);
   readonly breadcrumbItems = signal<BreadcrumbItem[]>([]);
   readonly unreadNotifications = signal(3);
-
-  readonly searchQuery = signal('');
-  readonly searchResults = signal<SearchResultItem[]>([]);
-  readonly searchLoading = signal(false);
-  readonly searchPanelOpen = signal(false);
-  private readonly searchTerms = new Subject<string>();
 
   readonly notifications = signal<NotificationItem[]>([
     { id: '1', icon: 'assignment', title: 'Nouvelle déclaration', message: 'Une déclaration a été soumise', time: 'il y a 5 min', unread: true },
@@ -108,25 +99,6 @@ export class MainLayoutComponent {
       .subscribe((event) => {
         this.buildBreadcrumb(event.urlAfterRedirects);
         if (this.isHandset()) this.sidenavOpened.set(false);
-        this.searchPanelOpen.set(false);
-      });
-
-    this.searchTerms
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        switchMap((term) => {
-          if (term.trim().length < 2) {
-            this.searchLoading.set(false);
-            return of(null);
-          }
-          this.searchLoading.set(true);
-          return this.searchService.search(term).pipe(catchError(() => of(null)));
-        }),
-      )
-      .subscribe((results) => {
-        this.searchLoading.set(false);
-        this.searchResults.set(results ? this.searchService.toResultItems(results) : []);
       });
   }
 
@@ -140,37 +112,6 @@ export class MainLayoutComponent {
 
   toggleTheme(): void {
     this.theme.toggle();
-  }
-
-  onSearchInput(value: string): void {
-    this.searchQuery.set(value);
-    this.searchPanelOpen.set(true);
-    this.searchTerms.next(value);
-  }
-
-  onSearchFocus(): void {
-    if (this.searchQuery().trim().length >= 2) {
-      this.searchPanelOpen.set(true);
-    }
-  }
-
-  goToSearchResult(item: SearchResultItem): void {
-    this.searchPanelOpen.set(false);
-    this.searchQuery.set('');
-    this.searchResults.set([]);
-    this.router.navigate(item.routerLink);
-  }
-
-  trackBySearchResult(_index: number, item: SearchResultItem): string {
-    return `${item.category}-${item.id}`;
-  }
-
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    const target = event.target as HTMLElement | null;
-    if (!target?.closest('.search-wrapper')) {
-      this.searchPanelOpen.set(false);
-    }
   }
 
   logout(): void {

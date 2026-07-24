@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
-import { Doctor, PaginatedResponse, PaginationParams } from '../models';
+import { CreateDoctorPayload, Doctor, DoctorCreationResult, PaginatedResponse, PaginationParams } from '../models';
 import { toHttpParams } from './http-utils';
 
 @Injectable({ providedIn: 'root' })
@@ -18,8 +18,8 @@ export class DoctorService {
     return this.http.get<Doctor>(`${this.baseUrl}/${id}`);
   }
 
-  create(data: Omit<Doctor, 'id' | 'createdAt' | 'updatedAt'>): Observable<Doctor> {
-    return this.http.post<Doctor>(this.baseUrl, data);
+  create(data: CreateDoctorPayload): Observable<DoctorCreationResult> {
+    return this.http.post<DoctorCreationResult>(this.baseUrl, data);
   }
 
   update(id: string, data: Partial<Doctor>): Observable<Doctor> {

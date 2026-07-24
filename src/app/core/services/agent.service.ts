@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
-import { Agent, PaginatedResponse, PaginationParams } from '../models';
+import { Agent, AgentCreationResult, CreateAgentPayload, PaginatedResponse, PaginationParams } from '../models';
 import { toHttpParams } from './http-utils';
 
 @Injectable({ providedIn: 'root' })
@@ -18,8 +18,8 @@ export class AgentService {
     return this.http.get<Agent>(`${this.baseUrl}/${id}`);
   }
 
-  create(data: Omit<Agent, 'id' | 'createdAt' | 'updatedAt'>): Observable<Agent> {
-    return this.http.post<Agent>(this.baseUrl, data);
+  create(data: CreateAgentPayload): Observable<AgentCreationResult> {
+    return this.http.post<AgentCreationResult>(this.baseUrl, data);
   }
 
   update(id: string, data: Partial<Agent>): Observable<Agent> {

@@ -1,6 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,7 +15,7 @@ import { User } from '@core/models';
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatIconModule, MatButtonModule, MatFormFieldModule, MatInputModule, PageHeaderComponent, LoadingSpinnerComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, MatCardModule, MatIconModule, MatButtonModule, MatFormFieldModule, MatInputModule, PageHeaderComponent, LoadingSpinnerComponent],
   template: `
     <div class="page-container">
       <app-page-header icon="person" title="Mon profil" subtitle="Gestion de votre profil utilisateur"></app-page-header>
@@ -35,9 +36,28 @@ import { User } from '@core/models';
           </div>
         </form>
       </mat-card>
+
+      <mat-card class="security-card">
+        <div class="security-row">
+          <div>
+            <strong>Sécurité du compte</strong>
+            <p>Modifiez votre mot de passe à tout moment.</p>
+          </div>
+          <button mat-stroked-button color="primary" routerLink="/change-password">
+            <mat-icon>lock_reset</mat-icon> Changer le mot de passe
+          </button>
+        </div>
+      </mat-card>
     </div>
   `,
-  styles: [`.full-width { width: 100%; } .profile-form { display:flex; gap:12px; flex-direction:column; } .actions { display:flex; justify-content:flex-end; }`],
+  styles: [`
+    .full-width { width: 100%; }
+    .profile-form { display:flex; gap:12px; flex-direction:column; }
+    .actions { display:flex; justify-content:flex-end; }
+    .security-card { margin-top:16px; padding:16px; }
+    .security-row { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+    .security-row p { margin:4px 0 0; font-size:13px; color:#607d8b; }
+  `],
 })
 export class ProfileComponent implements OnInit {
   private readonly service = inject(ProfileService);
