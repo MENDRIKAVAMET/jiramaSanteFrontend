@@ -109,7 +109,7 @@ import { getDefaultRouteForRole } from '@core/constants';
       flex: 1; 
       position: relative; 
       /* TODO: Remplacer par le chemin réel de ton image JIRAMA */
-      background: url('/assets/images/login-bg.jpg') center/cover no-repeat; 
+      background: url('/jirama.jpeg') center/cover no-repeat; 
       background-color: #00695c; /* Fallback couleur si l'image ne charge pas */
       display: flex; 
       align-items: flex-end; 
