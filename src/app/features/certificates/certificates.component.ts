@@ -8,16 +8,18 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 
 import { PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent } from '@shared/components';
 import { CertificateService, DeclarationService, DoctorService, mapDeclarationToListItem } from '@core/services';
 import { AuthService } from '@core/services/auth.service';
 import { CertificateListItem, DeclarationListItem, Doctor, CertificateType, CERTIFICATE_TYPE_LABELS } from '@core/models';
+import { DateUtils } from '@shared/utils/date.utils';
 
 @Component({
   selector: 'app-certificates',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatIconModule, MatButtonModule, MatInputModule, MatSelectModule, MatTableModule, MatToolbarModule, PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent],
+  imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatIconModule, MatButtonModule, MatInputModule, MatSelectModule, MatTableModule, MatToolbarModule, MatDatepickerModule, PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent],
   template: `
     <div class="page-container">
       <app-page-header icon="verified" title="Certificats médicaux" subtitle="Arrêts maladie, aptitudes, évacuations"></app-page-header>
@@ -59,11 +61,15 @@ import { CertificateListItem, DeclarationListItem, Doctor, CertificateType, CERT
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Valide du</mat-label>
-            <input matInput type="date" formControlName="validFrom" />
+            <input matInput [matDatepicker]="validFromPicker" formControlName="validFrom" readonly (click)="validFromPicker.open()" />
+            <mat-datepicker-toggle matSuffix [for]="validFromPicker"></mat-datepicker-toggle>
+            <mat-datepicker #validFromPicker></mat-datepicker>
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Valide au</mat-label>
-            <input matInput type="date" formControlName="validTo" />
+            <input matInput [matDatepicker]="validToPicker" formControlName="validTo" readonly (click)="validToPicker.open()" />
+            <mat-datepicker-toggle matSuffix [for]="validToPicker"></mat-datepicker-toggle>
+            <mat-datepicker #validToPicker></mat-datepicker>
           </mat-form-field>
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Contenu</mat-label>
@@ -140,8 +146,8 @@ export class CertificatesComponent implements OnInit {
     doctorId: new FormControl('', { nonNullable: true }),
     type: new FormControl<CertificateType>('repos', { nonNullable: true, validators: [Validators.required] }),
     content: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    validFrom: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    validTo: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    validFrom: new FormControl<Date | null>(null, { validators: [Validators.required] }),
+    validTo: new FormControl<Date | null>(null, { validators: [Validators.required] }),
   });
 
   ngOnInit(): void {
@@ -154,7 +160,7 @@ export class CertificatesComponent implements OnInit {
 
   onCreate(): void {
     this.editingId.set(null);
-    this.form.reset({ declarationId: '', doctorId: '', type: 'repos', content: '', validFrom: '', validTo: '' });
+    this.form.reset({ declarationId: '', doctorId: '', type: 'repos', content: '', validFrom: null, validTo: null });
     this.loadFormOptions();
     this.showForm.set(true);
   }
@@ -170,8 +176,8 @@ export class CertificatesComponent implements OnInit {
           doctorId: certificate.doctorId ?? '',
           type: certificate.type,
           content: certificate.content,
-          validFrom: certificate.validFrom?.slice(0, 10) ?? '',
-          validTo: certificate.validTo?.slice(0, 10) ?? '',
+          validFrom: certificate.validFrom ? new Date(certificate.validFrom) : null,
+          validTo: certificate.validTo ? new Date(certificate.validTo) : null,
         });
         this.showForm.set(true);
         this.loading.set(false);
@@ -212,8 +218,8 @@ export class CertificatesComponent implements OnInit {
       doctorId: raw.doctorId || null,
       type: raw.type,
       content: raw.content,
-      validFrom: raw.validFrom,
-      validTo: raw.validTo,
+      validFrom: DateUtils.toDateOnlyIso(raw.validFrom),
+      validTo: DateUtils.toDateOnlyIso(raw.validTo),
     };
 
     const request = this.editingId()
@@ -232,7 +238,7 @@ export class CertificatesComponent implements OnInit {
   cancelEdit(): void {
     this.showForm.set(false);
     this.editingId.set(null);
-    this.form.reset({ declarationId: '', doctorId: '', type: 'repos', content: '', validFrom: '', validTo: '' });
+    this.form.reset({ declarationId: '', doctorId: '', type: 'repos', content: '', validFrom: null, validTo: null });
   }
 
   typeLabel(type: CertificateType): string {

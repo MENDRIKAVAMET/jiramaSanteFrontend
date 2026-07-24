@@ -8,16 +8,18 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 
 import { PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent } from '@shared/components';
 import { ConsultationService, DeclarationService, DoctorService, mapDeclarationToListItem } from '@core/services';
 import { AuthService } from '@core/services/auth.service';
 import { ConsultationListItem, ConsultationStatus, CONSULTATION_STATUS_LABELS, DeclarationListItem, Doctor } from '@core/models';
+import { DateUtils } from '@shared/utils/date.utils';
 
 @Component({
   selector: 'app-consultations',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatIconModule, MatButtonModule, MatInputModule, MatSelectModule, MatTableModule, MatToolbarModule, PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent],
+  imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatIconModule, MatButtonModule, MatInputModule, MatSelectModule, MatTableModule, MatToolbarModule, MatDatepickerModule, PageHeaderComponent, EmptyStateComponent, LoadingSpinnerComponent],
   template: `
     <div class="page-container">
       <app-page-header icon="medical_services" title="Consultations" subtitle="Historique des consultations et suivis"></app-page-header>
@@ -52,8 +54,15 @@ import { ConsultationListItem, ConsultationStatus, CONSULTATION_STATUS_LABELS, D
             </mat-select>
           </mat-form-field>
           <mat-form-field appearance="outline">
-            <mat-label>Date et heure</mat-label>
-            <input matInput type="datetime-local" formControlName="scheduledAt" />
+            <mat-label>Date</mat-label>
+            <input matInput [matDatepicker]="scheduledDatePicker" formControlName="scheduledDate" readonly (click)="scheduledDatePicker.open()" />
+            <mat-datepicker-toggle matSuffix [for]="scheduledDatePicker"></mat-datepicker-toggle>
+            <mat-datepicker #scheduledDatePicker></mat-datepicker>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Heure</mat-label>
+            <input matInput type="time" formControlName="scheduledTime" />
+            <mat-icon matSuffix>schedule</mat-icon>
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Statut</mat-label>
@@ -135,7 +144,8 @@ export class ConsultationsComponent implements OnInit {
   readonly form = new FormGroup({
     declarationId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     doctorId: new FormControl('', { nonNullable: true }),
-    scheduledAt: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    scheduledDate: new FormControl<Date | null>(null, { validators: [Validators.required] }),
+    scheduledTime: new FormControl('08:00', { nonNullable: true, validators: [Validators.required] }),
     status: new FormControl<ConsultationStatus>('planifiee', { nonNullable: true, validators: [Validators.required] }),
     notes: new FormControl('', { nonNullable: true }),
   });
@@ -150,7 +160,7 @@ export class ConsultationsComponent implements OnInit {
 
   onCreate(): void {
     this.editingId.set(null);
-    this.form.reset({ declarationId: '', doctorId: '', scheduledAt: '', status: 'planifiee', notes: '' });
+    this.form.reset({ declarationId: '', doctorId: '', scheduledDate: null, scheduledTime: '08:00', status: 'planifiee', notes: '' });
     this.loadFormOptions();
     this.showForm.set(true);
   }
@@ -164,7 +174,8 @@ export class ConsultationsComponent implements OnInit {
         this.form.reset({
           declarationId: consultation.declarationId,
           doctorId: consultation.doctorId ?? '',
-          scheduledAt: consultation.scheduledAt?.slice(0, 16) ?? '',
+          scheduledDate: consultation.scheduledAt ? new Date(consultation.scheduledAt) : null,
+          scheduledTime: DateUtils.extractTime(consultation.scheduledAt) || '08:00',
           status: consultation.status,
           notes: consultation.notes ?? '',
         });
@@ -194,7 +205,7 @@ export class ConsultationsComponent implements OnInit {
     const payload: any = {
       declarationId: raw.declarationId,
       doctorId: raw.doctorId || null,
-      scheduledAt: raw.scheduledAt,
+      scheduledAt: DateUtils.combineDateAndTime(raw.scheduledDate, raw.scheduledTime),
       status: raw.status,
       notes: raw.notes || null,
     };
@@ -215,7 +226,7 @@ export class ConsultationsComponent implements OnInit {
   cancelEdit(): void {
     this.showForm.set(false);
     this.editingId.set(null);
-    this.form.reset({ declarationId: '', doctorId: '', scheduledAt: '', status: 'planifiee', notes: '' });
+    this.form.reset({ declarationId: '', doctorId: '', scheduledDate: null, scheduledTime: '08:00', status: 'planifiee', notes: '' });
   }
 
   statusLabel(status: ConsultationStatus): string {
